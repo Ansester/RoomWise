@@ -171,3 +171,5 @@ Without `--unsigned`, normal Xcode signing requirements apply. Future store mate
 - **Persistence/schema changes:** preserve old version handling or explicitly version the room contract; keep `USER_ENTERED`, fixture, and retrieved provenance distinct.
 
 See [contributing](../CONTRIBUTING.md) for pull-request expectations and evidence handling.
+
+The public workflow runs shared/desktop checks, the native iPhone suite, and the actual JVM/native pairing check as independent jobs. No provider keys or paid requests are used. The pairing harness waits for Simulator boot before starting its temporary listener; its test-process time limit accommodates slow hosted Simulator startup without relaxing product/selection assertions.

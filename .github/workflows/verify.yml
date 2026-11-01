@@ -13,22 +13,24 @@ concurrency:
   group: verify-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Every job uses synthetic fixtures. Never provision provider credentials in CI.
+env:
+  FITCHECK_PROVIDER: fixture
+  GROQ_API_KEY: ''
+  TAVILY_API_KEY: ''
+  OPENAI_API_KEY: ''
+  ANTHROPIC_API_KEY: ''
+  FITCHECK_LLM_KEY: ''
+  FITCHECK_TAVILY_KEY: ''
+  DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
+
 jobs:
-  macos:
-    # Standard GitHub-hosted runners are free for public repositories. Skip all
-    # runner work in private repositories, including manually triggered runs.
+  shared_desktop:
+    name: Shared geometry and desktop
+    # Standard public-repository runners; no private-repository runner usage.
     if: github.event.repository.private == false
     runs-on: macos-26
-    timeout-minutes: 90
-    env:
-      FITCHECK_PROVIDER: fixture
-      GROQ_API_KEY: ''
-      TAVILY_API_KEY: ''
-      OPENAI_API_KEY: ''
-      ANTHROPIC_API_KEY: ''
-      FITCHECK_LLM_KEY: ''
-      FITCHECK_TAVILY_KEY: ''
-      DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
         with:
@@ -43,7 +45,43 @@ jobs:
           sh scripts/release-check.sh
       - name: Verify shared geometry and desktop companion
         run: sh scripts/check.sh
+
+  iphone:
+    name: Native iPhone build and UI
+    if: github.event.repository.private == false
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Verify source configuration and app resources
+        run: |
+          python3 scripts/check-public-source.py
+          sh scripts/release-check.sh
       - name: Verify unsigned iPhone build and simulator tests
         run: sh scripts/check-ios.sh
+
+  live_pairing:
+    name: Live desktop to phone pairing
+    if: github.event.repository.private == false
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Verify source configuration and app resources
+        run: |
+          python3 scripts/check-public-source.py
+          sh scripts/release-check.sh
       - name: Verify real desktop to native phone pairing
         run: sh scripts/check-live-pairing.sh

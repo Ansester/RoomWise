@@ -46,6 +46,8 @@ Provider tests use injected HTTP responses, with no live keys or paid requests. 
 
 The public source is [Ansester/RoomWise](https://github.com/Ansester/RoomWise). The workflow skips private repositories and uses no provider secrets. Its connected-flow checks include source/resources, shared/desktop tests, unsigned device compilation, native tests/UI tests, and the real local JVM/native exchange.
 
+The first connected-flow public [run 41304508664](https://github.com/Ansester/RoomWise/actions/runs/41304508664) for application revision `ab008dd` passed source/resource checks, all shared/desktop cases, unsigned iPhone compilation, the native suite, and both actual UI cases. Its final separate pairing command exceeded its 150-second test-process limit on the hosted Simulator. That run is not an overall green CI result. The harness now waits for Simulator boot before starting its temporary server and allows bounded slower test startup. Independent checks run in parallel; their final result is recorded separately. Application behavior and test assertions were not weakened.
+
 Historical [run 41286710634](https://github.com/Ansester/RoomWise/actions/runs/41286710634) passed for the earlier revision `8da670f` with 41 native tests. That result predates this connected-shopping implementation. Current code and CI evidence must be identified separately.
 
 The unsigned Release archive contains version/build metadata, icon, privacy manifest, scoped local-network transport exception, and a nil-only compatibility credential stub. It is an inspection/build artifact, not a signed installable IPA or an App Store submission. No app, support website, or App Store distribution was deployed.

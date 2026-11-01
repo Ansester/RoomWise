@@ -87,6 +87,7 @@ def run_logged(command, log_name, timeout=900):
             output, _ = process.communicate()
         output = redact(output)
         (build / log_name).write_text(output, encoding="utf-8")
+        print("\n".join(output.splitlines()[-25:]), flush=True)
         raise RuntimeError("A check timed out; inspect build/" + log_name)
     output = redact(output)
     (build / log_name).write_text(output, encoding="utf-8")
@@ -107,9 +108,15 @@ try:
         devices = [device for device in devices if device["udid"] == requested]
     if not devices:
         raise RuntimeError("No available iPhone Simulator found.")
-    simulator = next((device for device in devices if device.get("state") == "Booted"), devices[0])["udid"]
+    selected_device = next((device for device in devices if device.get("state") == "Booted"), devices[0])
+    simulator = selected_device["udid"]
     destination = "platform=iOS Simulator,id=" + simulator
     derived = build / "live-pairing-derived-data"
+
+    print("Preparing the iPhone Simulator before starting the temporary pairing host…", flush=True)
+    if selected_device.get("state") != "Booted":
+        run_logged(["xcrun", "simctl", "boot", simulator], "live-pairing-simulator-boot.log", timeout=60)
+    run_logged(["xcrun", "simctl", "bootstatus", simulator, "-b"], "live-pairing-simulator-ready.log", timeout=300)
 
     print("Building the real desktop host and native Simulator test…", flush=True)
     run_logged([str(root / "gradlew"), "--no-daemon", ":desktop:packageUberJarForCurrentOS", "--console=plain"],
@@ -176,7 +183,7 @@ try:
             output = run_logged(["xcodebuild", "test-without-building", "-xctestrun", str(injected_run),
                                  "-destination", destination, "-parallel-testing-enabled", "NO",
                                  "-only-testing:FitCheckTests/LiveShoppingTests/testActualJVMDesktopPairing"],
-                                "live-pairing-native-test.log", timeout=150)
+                                "live-pairing-native-test.log", timeout=600)
             passed = re.search(r"testActualJVMDesktopPairing[^\n]*\bpassed\b", output, re.IGNORECASE)
             if not passed:
                 raise RuntimeError("The actual JVM pairing test did not report a pass; inspect build/live-pairing-native-test.log.")

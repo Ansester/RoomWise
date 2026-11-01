@@ -42,7 +42,7 @@ public final class LivePairingFixture {
             String endpoint = host.start(InetAddress.getByName("127.0.0.1")).get(0);
             Files.writeString(Path.of(args[0]), endpoint, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
             // Bound the listener even if the controlling test process exits unexpectedly.
-            new CountDownLatch(1).await(180, TimeUnit.SECONDS);
+            new CountDownLatch(1).await(660, TimeUnit.SECONDS);
         } catch (Exception ignored) {
             // The temporary bearer URL must never appear in stdout or diagnostic traces.
             System.err.println("Local JVM pairing fixture failed.");
