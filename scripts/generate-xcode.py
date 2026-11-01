@@ -22,6 +22,7 @@ app = objects["A00000000000000000000005"]
 tests = objects["A00000000000000000000046"]
 assert app["productType"] == "com.apple.product-type.application"
 assert tests["productType"] == "com.apple.product-type.bundle.unit-test"
+assert "$(SRCROOT)/Generated/LocalDebugSecrets.generated.swift" in objects["A00000000000000000000015"]["outputPaths"], "Declare the generated compatibility source so clean Xcode builds schedule its producer"
 for config in ("A00000000000000000000012", "A00000000000000000000013"):
     assert str(objects[config]["buildSettings"]["TARGETED_DEVICE_FAMILY"]) == "1", "App release scope is iPhone only"
 for item in objects.values():

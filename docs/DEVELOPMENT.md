@@ -47,6 +47,8 @@ Open `iosApp/FitCheck.xcodeproj`, select the shared **FitCheck** scheme, choose 
 
 Xcode invokes `scripts/framework-for-xcode.sh` before compiling Swift. The script selects the Kotlin device/simulator target and Debug/Release framework. The linked framework is `FitCheckShared`; the project contains the matching search path and linker configuration. It also runs `generate-local-secrets.py`, which always writes a nil-only compatibility stub in every configuration. No local API credentials are bundled.
 
+The shell phase declares the generated compatibility source as an output. This dependency is required for a clean checkout: the file does not need to exist before Xcode plans the build. Keep that output declaration when editing the project rather than checking the generated file into Git.
+
 The iPhone app defaults to labelled sample mode. Use Connections to save personal keys when exercising automatic search. `config.local.properties` is **not** an iPhone credential loader.
 
 Physical-device signing is optional for the repository workflow. If you choose to install on your own iPhone, use a team/bundle identifier your account can sign; Simulator and unsigned compile checks do not establish that a device provisioning profile exists. LiDAR and AR acceptance are documented separately in [device acceptance](DEVICE_ACCEPTANCE.md).

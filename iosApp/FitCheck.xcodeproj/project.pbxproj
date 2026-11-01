@@ -164,6 +164,7 @@
 			inputPaths = (
 			);
 			outputPaths = (
+				"$(SRCROOT)/Generated/LocalDebugSecrets.generated.swift",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;

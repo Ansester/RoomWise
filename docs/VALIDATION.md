@@ -11,6 +11,7 @@ This record covers the standalone GitHub source with hosted free-tier Groq reque
 | Desktop Compose UI smoke tests | 2 passed |
 | iPhone XCTest suite | 41 passed |
 | iPhone unsigned device build | Succeeded |
+| Clean public checkout | Unsigned device build and all 41 XCTest tests passed with no pre-existing generated compatibility source |
 | Final unsigned Release archive | Succeeded, version 1.0.0 (1) |
 | iPhone hosted renders | 10 images captured across 375×812 and 430×932 viewports |
 | Source/resource/credential checks | Passed |
