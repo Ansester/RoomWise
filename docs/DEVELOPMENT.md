@@ -14,7 +14,7 @@ Start with [architecture](ARCHITECTURE.md) for the module boundaries, [user guid
 | Compose Multiplatform | Desktop UI | 1.11.1 |
 | Koog | Optional desktop Groq requirements agent | 1.2.0 |
 | Python 3 | Desktop launcher and project/release validation | No third-party Python package required by these scripts |
-| Xcode and iOS Simulator runtime | iPhone compile/test | Local verification used Xcode 27.1; deployment target is iOS 17 |
+| Xcode and iOS Simulator runtime | iPhone compile/test | Local verification used Xcode 27.1; public CI passed under Xcode 26.6; deployment target is iOS 17 |
 | Apple-silicon native target | Checked-in iPhone framework paths | `iosArm64` and `iosSimulatorArm64` |
 
 The native build scripts currently select ARM64 Simulator output. An Intel-only Mac would need an added Kotlin `iosX64` target and matching Xcode/framework-script configuration; that path is not implemented or verified. The Compose/JVM desktop source uses the current host's Compose artifact, but the recorded desktop verification was on macOS. Do not infer Windows/Linux distribution testing from a JVM compile or a macOS smoke test.

@@ -15,6 +15,7 @@ This record covers the standalone GitHub source with hosted free-tier Groq reque
 | Final unsigned Release archive | Succeeded, version 1.0.0 (1) |
 | iPhone hosted renders | 10 images captured across 375×812 and 430×932 viewports |
 | Source/resource/credential checks | Passed |
+| Public GitHub Actions | [Passed](https://github.com/Ansester/RoomWise/actions/runs/41286710634) for source revision `8da670f` |
 
 Commands: `sh scripts/check.sh`, `sh scripts/check-ios.sh`, `sh scripts/release-check.sh`. The suites cover geometry/concave boundaries, ambiguous scan joins, bounded file import, retailer URL constraints, manual listing provenance, local persistence, Keychain separation, stale/cancelled requests, provider errors, and secret-exclusion regressions. Hosted render images cover the initial screen, help/privacy, dimensions, free-provider settings, and manual chair entry; representative exports were visually inspected. Hosted rendering does not exercise full touch navigation, camera, or AR tracking.
 
@@ -28,7 +29,7 @@ The public-documentation audit added a SceneKit regression checking the schemati
 
 The project contains a RoomWise icon, version/build metadata, privacy manifest, shared schemes, and a repeatable `scripts/archive-ios.sh --unsigned` command. Release archives are local build artifacts, not an App Store submission or an installable signed IPA. The final unsigned archive was built successfully and its version, icon/resource metadata, iPhone targeting, privacy manifest, nil-only credential stub, and absence of known local credentials were checked. Signing, enrollment, hosting support URLs, and store submission are optional future work, separate from repository completion.
 
-No app, website, or App Store release was published. Public-repository CI is configured in `.github/workflows/verify.yml`; local success is separate from the remote run. It deliberately skips private repositories to avoid paid private macOS runner work. Public-run evidence is recorded after publication.
+The source is public at [Ansester/RoomWise](https://github.com/Ansester/RoomWise). [Public CI run 41286710634](https://github.com/Ansester/RoomWise/actions/runs/41286710634) passed for revision `8da670f` on the standard macOS 26 ARM64 runner with Xcode 26.6: source/resource checks, shared/desktop checks, unsigned device compilation, and all 41 iOS XCTest tests succeeded. Subsequent documentation-only updates do not change that tested application code. The workflow deliberately skips private repositories. No application, support website, or App Store distribution was deployed.
 
 ## Boundaries
 

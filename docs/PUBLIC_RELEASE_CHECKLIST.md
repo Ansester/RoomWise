@@ -2,6 +2,21 @@
 
 RoomWise can be presented as a software prototype with source and reproducible engineering checks. Public source availability, an open-source licence, live-provider verification, and App Store distribution are separate states.
 
+## Published copy
+
+| Item | Verified state |
+| --- | --- |
+| Canonical source | [Ansester/RoomWise](https://github.com/Ansester/RoomWise) |
+| Visibility | Public; accessible without authentication |
+| Default branch | `main` |
+| Initial public history | Independent source snapshot; initial commit `dbe4f3e` has no parent |
+| Private history | Not imported; original team repository remains separate |
+| Tested source revision | `8da670f` |
+| Public verification | [GitHub Actions passed](https://github.com/Ansester/RoomWise/actions/runs/41286710634), including 41 iOS tests and shared/desktop checks |
+| Portfolio material | [CV and website copy](PORTFOLIO.md), [case study](CASE_STUDY.md), and [claim ledger](CLAIMS.md) |
+
+The public source tree and every public commit snapshot present during the release audit passed the configured source-export checks. Contributors remain credited. No permissive reuse licence, App Store release, live-provider evaluation, or user-outcome result is implied by publication.
+
 ## Current release route
 
 The original repository contains historical demo credentials. Deleting `config.local.properties` from the latest source does not remove that file from earlier commits. This audit did not read or test the old credential values, and their revocation status is unknown.
@@ -40,4 +55,4 @@ The public-source checker inspects current tracked and nonignored files by defau
 
 Use the current [validation record](VALIDATION.md) and [claim ledger](CLAIMS.md) for test counts, source anchors, and limitations. Automated provider checks use HTTP mocks; they are not live model, retailer-coverage, or pricing validation. Hosted UI renders are not physical LiDAR/AR acceptance tests. The existing archive is an unsigned build artifact, not a published app or signed installable IPA.
 
-After a public copy is created, verify its returned repository URL, public visibility, default branch/source commit, documentation links, and absence of an inherited private Git history. Record actual public CI outcomes separately from the local test evidence.
+The table above records the publication checks and public CI outcome. Repeat the current-source/export checks for later releases and keep remote results separate from local evidence. Documentation-only updates after the tested source revision do not change its application code.

@@ -1,6 +1,6 @@
 # Portfolio and CV material
 
-This is prepared copy for featuring RoomWise. It does not update or publish a CV or website. Use the canonical repository link after the public release is available: **https://github.com/Ansester/RoomWise**.
+This is prepared copy for featuring RoomWise. It does not update or publish a CV or website. The canonical public repository is: **https://github.com/Ansester/RoomWise**.
 
 Describe the work as a **collaborative software prototype** and retain [contributor credit](CONTRIBUTORS.md). The project-level descriptions below are supported by the source; select any first-person implementation claims only after confirming they match your own contribution.
 
