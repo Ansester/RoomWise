@@ -1,5 +1,7 @@
 # RoomWise
 
+[![Verify RoomWise](https://github.com/Ansester/RoomWise/actions/workflows/verify.yml/badge.svg)](https://github.com/Ansester/RoomWise/actions/workflows/verify.yml)
+
 **Chair fit checks for a captured room — with native iPhone and desktop interfaces.**
 
 RoomWise combines room capture, a scaled chair preview, and shared Kotlin geometry to help compare furniture dimensions with a space before buying. Optional Groq and Tavily integrations interpret shopping requests and find retailer listings. Product measurements and geometric fit come from explicit evidence and deterministic code.

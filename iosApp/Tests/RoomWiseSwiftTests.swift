@@ -953,8 +953,8 @@ final class RoomWiseSwiftTests: XCTestCase {
             ))
             context.interpolationQuality = .high
             context.draw(cgImage, in: CGRect(x: 0, y: 0, width: sampleSize, height: sampleSize))
-            // Explicit intermediate types keep the check inexpensive for the
-            // Swift 6.2 compiler shipped on the standard macOS CI runner.
+            // Explicit intermediate types keep inference inexpensive across
+            // Swift compiler versions, including the standard CI toolchain.
             var values: [Int] = []
             values.reserveCapacity(sampleSize * sampleSize)
             var offset = 0
