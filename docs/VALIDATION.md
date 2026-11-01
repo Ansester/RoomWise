@@ -13,8 +13,9 @@ This record covers the connected shopping implementation: contextual chat, swipe
 | Actual desktop JVM to native client | 1 integration test passed via `sh scripts/check-live-pairing.sh` |
 | Unsigned Release archive | Succeeded, version 1.0.0 (1), including local-network permission and scoped transport settings |
 | Source/resource/credential checks | Passed |
+| Public clean-checkout CI | [All three jobs passed](https://github.com/Ansester/RoomWise/actions/runs/41306498028) for `c2197f4` |
 
-The final combined local native run passed: 57 unit/integration cases executed with zero failures and one deliberate skip, followed by both real UI cases passing. The skipped endpoint-dependent case passed in the separate actual JVM/native run. Together with the 41 shared/desktop cases, **100 distinct automated cases passed** across these checks. Public CI for the published revision is recorded separately below.
+The final combined local native run passed: 57 unit/integration cases executed with zero failures and one deliberate skip, followed by both real UI cases passing. The skipped endpoint-dependent case passed in the separate actual JVM/native run. Together with the 41 shared/desktop cases, **100 distinct automated cases passed** across these checks. Public CI for the published revision also passed, as recorded below.
 
 ## What the connected tests establish
 
@@ -45,6 +46,8 @@ Provider tests use injected HTTP responses, with no live keys or paid requests. 
 ## Release and public CI
 
 The public source is [Ansester/RoomWise](https://github.com/Ansester/RoomWise). The workflow skips private repositories and uses no provider secrets. Its connected-flow checks include source/resources, shared/desktop tests, unsigned device compilation, native tests/UI tests, and the real local JVM/native exchange.
+
+**Current public result:** [run 41306498028](https://github.com/Ansester/RoomWise/actions/runs/41306498028) passed for source revision `c2197f4d6312fdfbacf0b9458f4fcad030550db3` on standard macOS 26 ARM64 runners with Xcode 26.6. All three independent jobs succeeded: shared/desktop tests, unsigned device build plus native unit/UI tests, and actual JVM/native pairing. The public pairing log confirms the production native client received JVM fixtures, sent selection B, and followed publication C. Across the regular suites and separate endpoint-dependent case, all 100 distinct automated cases passed. Subsequent documentation-only receipt changes do not change the tested application or harness code.
 
 The first connected-flow public [run 41304508664](https://github.com/Ansester/RoomWise/actions/runs/41304508664) for application revision `ab008dd` passed source/resource checks, all shared/desktop cases, unsigned iPhone compilation, the native suite, and both actual UI cases. Its final separate pairing command exceeded its 150-second test-process limit on the hosted Simulator. That run is not an overall green CI result. The harness now waits for Simulator boot before starting its temporary server and allows bounded slower test startup. Independent checks run in parallel; their final result is recorded separately. Application behavior and test assertions were not weakened.
 

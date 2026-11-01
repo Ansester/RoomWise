@@ -73,6 +73,10 @@ Choose two or three responsibilities you can explain in an interview, such as co
 
 The public repository begins from a clean source snapshot with contributor credit; it does not reproduce the whole private development history or establish sole authorship.
 
+## Verification you can cite
+
+The [validation record](VALIDATION.md) documents 100 distinct passing automated cases, an unsigned Release archive, real Simulator touch interaction, and a production JVM-to-native client exchange. [Public CI passed](https://github.com/Ansester/RoomWise/actions/runs/41306498028) for `c2197f4`. These are engineering checks; live provider availability, physical AR accuracy, adoption, and user benefit were not measured.
+
 ## Interview walkthrough
 
 1. State the intended loop: conversation → product page → changing room preview.

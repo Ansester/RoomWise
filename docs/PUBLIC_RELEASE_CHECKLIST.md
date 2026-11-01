@@ -13,6 +13,8 @@ RoomWise can be presented as a software prototype with source and reproducible e
 | Private history | Not imported; original team repository remains separate |
 | Earlier tested source revision | `8da670f`; this predates the contextual-chat/pairing expansion. See [current validation](VALIDATION.md) for later evidence. |
 | Earlier public verification | [GitHub Actions passed](https://github.com/Ansester/RoomWise/actions/runs/41286710634), including 41 iOS tests and shared/desktop checks |
+| Connected-shopping tested revision | `c2197f4`; application code is unchanged from `ab008dd` and the hosted-Simulator harness is fixed. |
+| Current public verification | [All three jobs passed](https://github.com/Ansester/RoomWise/actions/runs/41306498028): shared/desktop, native build/UI, and actual JVM/native pairing. |
 | Portfolio material | [CV and website copy](PORTFOLIO.md), [case study](CASE_STUDY.md), and [claim ledger](CLAIMS.md) |
 
 The public source tree and every public commit snapshot present during the release audit passed the configured source-export checks. Contributors remain credited. No permissive reuse licence, App Store release, live-provider evaluation, or user-outcome result is implied by publication.
@@ -55,4 +57,4 @@ The public-source checker inspects current tracked and nonignored files by defau
 
 Use the current [validation record](VALIDATION.md) and [claim ledger](CLAIMS.md) for test counts, source anchors, and limitations. Automated provider checks use HTTP mocks; they are not live model, retailer-coverage, or pricing validation. Hosted UI renders are not physical LiDAR/AR acceptance tests. The existing archive is an unsigned build artifact, not a published app or signed installable IPA.
 
-The table above records the initial publication checks and earlier public CI outcome. It does not establish that later contextual-chat, carousel, and pairing changes passed; their current evidence belongs in [validation](VALIDATION.md). Repeat the current-source/export checks for later releases and keep remote results separate from local evidence. Documentation-only updates after the tested source revision do not change its application code.
+The table distinguishes initial publication from the connected-shopping revision. The [validation record](VALIDATION.md) records the passing current local and public checks, including real touch navigation and the JVM/native exchange. Repeat source/export checks for later releases and keep remote results separate from local evidence. Documentation-only receipt updates after the tested revision do not change application or harness code.

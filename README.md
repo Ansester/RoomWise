@@ -111,6 +111,8 @@ python3 scripts/check-public-source.py
 sh scripts/archive-ios.sh --unsigned
 ```
 
+**Verification:** 100 distinct automated cases passed across the regular suites and the separate real JVM/native connection test. [Public CI passed](https://github.com/Ansester/RoomWise/actions/runs/41306498028).
+
 The [validation record](docs/VALIDATION.md) identifies the exact tested revision, completed checks, and their limits. The separate live-pairing check requires macOS/Xcode/JDK 21 and tests the real local transport without provider accounts or physical hardware; it is not a live-retailer or camera test. Provider regression tests use HTTP mocks; they do not establish authenticated-provider reliability, retailer coverage, physical AR accuracy, or user benefit. Public CI results are recorded separately. Standard public-repository CI uses no API secrets and skips private repositories.
 
 The main directories are `iosApp/` (phone UI, capture, AR, chat, pairing, storage), `shared/` (Kotlin models/geometry/evidence), `desktop/` (Compose, chat, shopping, local pairing host), and `scripts/` (build/test/release helpers). [Development](docs/DEVELOPMENT.md) · [Contributing](CONTRIBUTING.md).
