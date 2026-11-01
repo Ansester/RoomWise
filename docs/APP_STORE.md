@@ -7,13 +7,13 @@ RoomWise can be used locally without App Store publication or paid model/search 
 - The Apple Developer Program account that owns or can register `dev.fitcheck.prototype`. Confirm that the preserved project team is the intended distribution account before signing.
 - The publisher's actual legal/copyright name and App Review contact name/telephone number. Public support email: `info.roomwise@gmail.com`.
 - Public HTTPS support and privacy-policy URLs. Finished static pages are in `docs/store-site/`; [PRIVACY.md](PRIVACY.md) contains the policy text. Nothing has been hosted.
-- Final app pricing and regional availability choices. Each clone can use its own Groq free-plan key and Tavily Researcher free-tier key. Hosted interpretation is independent of the device running this clone.
+- Final app pricing and regional availability choices. Each clone can use its own Groq free-plan key and Tavily Researcher free-tier key. Hosted conversation is independent of the device running this clone.
 
 Apple requires a privacy-policy URL for iOS apps and a support URL leading to actual contact information. [Privacy setup](https://developer.apple.com/help/app-store-connect/manage-app-information/manage-app-privacy/), [platform version fields](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information/).
 
 ## Free search setup
 
-Hosted request interpretation uses a personal Groq free-plan key with the default `openai/gpt-oss-20b` model. That is a model served by Groq, not a connection to the OpenAI API. Exact free-plan limits depend on the Groq organization; its current free table includes this model. [Groq rate limits, checked November 1, 2026](https://console.groq.com/docs/rate-limits).
+Hosted shopping conversation uses a personal Groq free-plan key with the default `openai/gpt-oss-20b` model. That is a model served by Groq, not a connection to the OpenAI API. Exact free-plan limits depend on the Groq organization; its current free table includes this model. [Groq rate limits, checked November 1, 2026](https://console.groq.com/docs/rate-limits).
 
 Automatic retailer discovery requires a personal Tavily key. Choose Tavily's **Researcher** free plan, with no payment card or paid upgrade. Tavily currently advertises 1,000 credits monthly and stops free requests when exhausted. RoomWise uses basic search only, up to three requests per search, with a local 300-request monthly limit per installation. It does not use extract, advanced search, automatic retries, or a paid fallback. The provider account's actual remaining quota can be lower if it is used elsewhere. If the key is absent, quota is exhausted, or retrieval fails, browser search links and manual chair entry remain available. [Tavily pricing, checked November 1, 2026](https://www.tavily.com/pricing).
 
@@ -24,7 +24,7 @@ The app cannot change the user's provider plan or determine charges configured e
 | Field | Text |
 | --- | --- |
 | Name | RoomWise |
-| Subtitle | Scan rooms. Preview chair fit. |
+| Subtitle | Chat. Browse. See it at home. |
 | Primary category | Lifestyle |
 | Secondary category | Shopping |
 | Primary language | English |
@@ -36,32 +36,37 @@ The name is subject to App Store availability. Category choices are recommendati
 **Promotional text**
 
 ```text
-Scan your room, compare chair dimensions, and preview in 3D or AR. Discover listings with your own free-tier Groq and Tavily accounts, or plan with samples.
+Talk about a chair, browse the options, and see the selected item in your room. Use personal free-tier accounts or explore samples; pair desktop browsing locally.
 ```
 
 **Description**
 
 ```text
-Plan a chair's place before you buy.
+Talk about what you want to buy. Browse the options. See each one in your room.
 
-RoomWise brings room scanning, dimension-based chair previews, and floor-footprint checks together on your iPhone. No paid AI model is needed.
+RoomWise connects an ongoing chair-shopping conversation to product pages and a changing room preview on your iPhone. No RoomWise account or paid model is required.
 
-SCAN AND REVIEW
-Use Apple RoomPlan on a supported LiDAR iPhone to capture walls, openings, and recognized furniture. Review the room in 3D. Partial scans are clearly labelled and cannot confirm the room boundary.
+CHAT AND REFINE
+Describe a chair, then keep talking: change colour, budget, features, or size limits. Send updates the conversation using your optional personal Groq Free key; a clearly labelled limited local fallback remains available. Find matches sends a nonempty draft once before searching; with no draft, it uses accepted preferences without a model call.
 
-PLACE AND COMPARE
-Choose a sample chair, discover a retailer listing, or enter a chair's details yourself. Add assembled dimensions from the seller's page and compare it with your room. Drag, rotate, and recenter the chair. On supported physical iPhones, place a simplified chair in AR at those dimensions. The preview represents size, not the seller's exact design.
+BROWSE AND PREVIEW
+Swipe between RoomWise product pages and the selected item changes in the room preview. Load a known retailer page explicitly to inspect the offer. Following another retailer page, a variant-related URL query/fragment change, or same-document navigation pauses the preview until a known product is selected again. The object is a schematic chair scaled to explicit assembled dimensions, not the seller's exact 3D design. Unknown dimensions stay unknown; enter reliable measurements to enable a size-based preview.
 
-FREE-TIER INTERPRETATION AND RETAILER SEARCH
-Describe what you want. With your own free-plan Groq key, RoomWise interprets the chair request using a hosted model. A deterministic parser remains available if the key or service is unavailable. Optional automatic discovery uses your own Tavily Researcher free-tier key, with basic requests and a local monthly limit. No key is needed for sample planning, scanning, dimension editing, or fit checks. Browser search links and manual chair entry remain available when the key or quota is unavailable.
+PAIR DESKTOP BROWSING
+An optional desktop companion can drive the phone's product selection over trusted local Wi-Fi. Pair using a temporary private link and stop when finished. No hosted relay or subscription is needed. Pairing uses local HTTP and transfers products/selection only, not room geometry, chat, or keys. Keep its link private and do not expose the port publicly.
 
-UNDERSTAND THE EVIDENCE
-Search discovery does not guarantee complete retailer coverage. Sample chairs are labelled; listing text, prices, and dimensions may be incomplete. User-entered dimensions are identified and missing dimensions remain unknown. Fit checks compare the chair's floor footprint with captured walls and recognized furniture. They do not assess hidden obstacles, overhead clearance, movement, door swings, or delivery routes. Always measure and confirm the seller's details before buying.
+SCAN AND CHECK
+Use Apple RoomPlan on a supported LiDAR iPhone, import a RoomWise room file, or explore the sample. Move, rotate, and recenter the chair; shared geometry checks captured floor footprints. Partial scans withhold boundary confirmation. Physical AR is available on supported hardware; Simulator offers a labelled rehearsal.
 
-KEEP CONTROL OF YOUR ROOM
-Rooms, search text, product information, and placement are saved locally and may be included in device backups. RoomWise asks permission before sending your chair request to Groq and search requirements to Tavily. Room geometry and camera photos are not uploaded to that service. Provider keys are stored in this device's Keychain. There is no RoomWise account, advertising, analytics SDK, or remote OpenAI connection. Export room JSON when you choose or delete local data in Help & Privacy.
+FREE-TIER DISCOVERY
+Optional automatic discovery uses a personal Tavily Researcher free key. Requests use basic search, bounded calls, and a local monthly allowance, with no extra page extraction, automatic retries, or paid-provider fallback. Search covers indexed retailer pages rather than a complete catalog. Samples, manual chair entry, and direct retailer links remain available when a key or quota is unavailable.
 
-Requires iOS 17 or later. Room scanning requires a LiDAR-equipped iPhone. AR requires supported hardware and camera access. Other iPhones can use the sample room or import a RoomWise room file. Groq and Tavily free-account quotas and terms apply to automatic features.
+EVIDENCE AND PRIVACY
+Sample, live, saved-live, and user-entered data have distinct labels. Listing facts may be incomplete. Footprint checks do not assess hidden obstacles, overhead clearance, movement, door swings, or delivery routes. Confirm the actual product and room before buying.
+
+Room, product, placement, and up to 40 recent chat messages/preferences are saved locally and may be included in device backups. With permission, Groq receives bounded chat/preferences and Tavily receives search requirements; neither receives room geometry or camera images. Keys use device Keychain. Delete planning data and clear keys separately. External retailer websites have their own policies. No advertising, analytics SDK, developer-operated account service, or OpenAI API connection is included.
+
+Requires iOS 17 or later. Scanning requires a LiDAR-equipped iPhone; physical AR requires supported hardware/camera access. Provider free-plan quotas and terms apply.
 ```
 
 **Copyright**
@@ -72,15 +77,16 @@ Requires iOS 17 or later. Room scanning requires a LiDAR-equipped iPhone. AR req
 
 ## App Privacy responses
 
-Use these conservative responses, matching `iosApp/PrivacyInfo.xcprivacy`. Optional automatic search is part of the app's functionality; do not select “Data Not Collected” because offline use is possible. Confirm final provider terms and archive behavior before submitting. Apple explains collection, linkage, and optional disclosure in [App Privacy details](https://developer.apple.com/app-store/app-privacy-details/).
+Use these conservative responses, matching `iosApp/PrivacyInfo.xcprivacy`. Optional conversation and automatic search are part of the app's functionality; do not select “Data Not Collected” because offline use is possible. Confirm final provider terms and archive behavior before submitting. Apple explains collection, linkage, and optional disclosure in [App Privacy details](https://developer.apple.com/app-store/app-privacy-details/).
 
 | Question/data | Prepared response | Implementation basis |
 | --- | --- | --- |
 | Do you or third-party partners collect data from this app? | Yes | Optional requests go directly to Groq/Tavily; their account/retention terms apply. |
-| Search History | Collected; App Functionality; linked to user; not tracking | Chair requests sent to Groq and search requirements sent to Tavily. No room geometry/summary is transmitted. |
+| Search History | Collected; App Functionality; linked to user; not tracking | Bounded shopping conversation/preferences sent to Groq; search requirements sent to Tavily. No room geometry/summary is transmitted. |
+| Other User Content | Collected; App Functionality; linked to user; not tracking | Freeform shopping conversation sent to Groq. Declared in the current privacy manifest; confirm the corresponding App Store form at submission. |
 | User ID | Collected; App Functionality; linked to user; not tracking | Personal keys authenticate to their respective Groq/Tavily accounts. No RoomWise account service. |
 | Data used for tracking | No | No advertising, cross-app tracking, or analytics SDK. |
-| Other User Content, room geometry, photos | Not collected off device by this app | Local scan/fit processing; model sees chair request only; no saved/uploaded camera photos. User-selected exports and external links are explained in the policy. |
+| Room geometry and camera photos | Not sent to hosted providers by this app | Local scan/fit processing; model sees bounded shopping conversation/preferences only; no saved/uploaded camera photos. User-selected exports and external links are explained in the policy. |
 | Required reason API | UserDefaults, CA92.1 | Saved rooms/products/placement/preferences and local quota accounting accessible only to the app. |
 
 Linkage is conservative because requests use an identifiable provider account. The bundled manifest and App Store questionnaire are separate steps. App Privacy must change if additional remote features or telemetry are added.
@@ -90,27 +96,29 @@ Historical prototypes embedded OpenAI/Tavily demo keys. Current iOS builds gener
 ## Paste-ready App Review notes
 
 ```text
-RoomWise is an iPhone room-planning app. No RoomWise account or paid AI model is required.
+RoomWise is an iPhone conversational chair-shopping prototype. No RoomWise account or paid model is required.
 
-1. Launch the app. It opens with a labelled sample room and sample chairs.
-2. Select a chair, drag it in the room, and use rotation/recenter controls. Open details and Edit to enter assembled dimensions.
-3. Describe chair requirements. The default hosted parser uses the user's Groq free-plan key and openai/gpt-oss-20b, with deterministic fallback. Only the chair request is sent; no room data is included. The service is Groq; there is no OpenAI API connection.
-4. Optional automatic retailer discovery uses a personal Tavily free-tier key saved through Connections in the device Keychain. It asks permission before sharing chair-search requirements. Only basic search is used, up to three requests per search, with a local 300-request monthly limit. It does not send room geometry, room summaries, or camera photos. No extract/advanced requests or automatic retries are used.
-5. With no key, exhausted quota, or retrieval errors, use external retailer search links or add a chair by pasting listing information/entering details. No key is needed for sample planning, scanning, dimension editing, or fit checks. Search coverage and listing facts can be incomplete; this is not a complete retailer catalogue.
-6. On a supported physical iPhone, open AR Preview, detect a horizontal surface, and tap to place a simplified chair at the selected dimensions. The simulator uses a labelled 3D rehearsal.
-7. For a real scan, use the Room actions menu on a LiDAR-equipped iPhone and grant camera access. Finish/review/accept the scan. Partial scans withhold boundary confirmation.
-8. Room actions also offer JSON import/export and Help & Privacy, including permission revocation and local saved-data deletion. Clear the separately stored Tavily key in Connections. Support: info.roomwise@gmail.com.
+1. Launch into the labelled sample room/chairs. Use Send for a request and follow-up refinements; sample mode uses the labelled limited local fallback without network calls. New chat resets context.
+2. Use Find matches to retrieve from accepted preferences separately from chat. Live discovery needs a personal Tavily free key; Groq Free is optional for contextual LLM replies. Model openai/gpt-oss-20b is served by Groq, not OpenAI. The sharing disclosure covers bounded chat/preferences and search requirements, not room/camera data.
+3. Swipe product pages or use Previous/Next. The selected product changes the room object immediately. Known assembled dimensions are required; Edit allows user-entered measurements. The schematic is not the exact retailer model.
+4. Load retailer page opens an ephemeral embedded page explicitly. Following another page, a variant-related URL query/fragment change, or same-document navigation pauses preview rather than implying that the newly viewed item has verified dimensions. External browser navigation is not monitored.
+5. Choose Camera AR on supported hardware, detect a surface, and tap to place. Switch products while the preview remains visible; the schematic updates while a usable placement is retained. Simulator uses a labelled rehearsal.
+6. Optional Pair with desktop accepts a temporary private local HTTP URL from the companion. A trusted same-network session transmits product/selection state only. Stop/disconnect invalidates the session; no hosted account/server is required.
+7. Room actions include scan/review/accept on LiDAR hardware, import/export, Connections, and Help & Privacy. Partial captures withhold complete-boundary confirmation. Keys are saved/cleared separately through Connections.
+8. Local planning deletion clears saved room, search, products, placement, chat, and preferences. Provider keys and the local quota record remain separate. Support: info.roomwise@gmail.com.
 
-The app has no developer-operated account service, advertising, or analytics SDK. Saved room/search/product state stays in local storage. With permission, Groq receives the chair request and its authentication; Tavily receives search requirements and its authentication. Requests are associated with the respective user-owned provider accounts. Neither service receives room geometry, fit summaries, or camera photos. External retailer links open only on user action and follow the site's own policies. User-selected JSON exports contain room geometry.
+Conversation is bounded to twelve recent messages at 1,500 characters each per model turn; up to 40 recent messages/preferences are saved locally. Send makes at most one Groq call; Find matches makes at most three basic Tavily calls and uses a local 300-request UTC-month allowance. No automatic retries, advanced/extract requests, or paid-provider switch occur. Changing pages and pairing make no hosted-provider calls.
 
-A chair preview is a dimensional model, not the exact seller design. Footprint checks do not certify movement, overhead clearance, hidden obstacles, delivery routes, or door swing. Entered dimensions and pasted content are not independently verified.
+RoomWise has no developer account service, advertising, or analytics SDK. Requests use the user's respective Groq/Tavily accounts and are governed by provider policies. Neither receives room geometry, fit summaries, or camera images. External websites and exported room JSON have separate privacy lifecycles.
+
+Footprint checks do not certify movement, overhead clearance, hidden obstacles, delivery routes, or door swing. Entered dimensions and pasted text are not independently verified.
 ```
 
 Decide how App Review will access optional automatic search before submission. If temporary provider credentials are needed, arrange them privately through the review process with a free account/quota, keep them valid during review, and revoke them afterward. Never put credentials in public metadata, screenshots, or this document. Supply any hardware/resources Apple needs. [App Review completeness](https://developer.apple.com/app-store/review/guidelines/#app-completeness).
 
 ## Screenshots
 
-Capture the current app: placement; chair comparison/dimension evidence; search/manual chair entry; Help & Privacy. Preserve sample/source labels. Real scan/AR screenshots should come from tested hardware and a room you have permission to show. Do not present simulator rehearsal as real AR. Use accepted large-iPhone portrait dimensions in Apple's [screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/). This release scope is iPhone only.
+Capture the current app: contextual conversation; product-page selection changing the room preview; optional local pairing; dimension evidence; Help & Privacy. Do not expose provider keys or pairing tokens. Preserve sample/source labels. Real scan/AR screenshots should come from tested hardware and a room you have permission to show. Do not present simulator rehearsal as real AR. Use accepted large-iPhone portrait dimensions in Apple's [screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/). This release scope is iPhone only.
 
 ## Future publication steps — not needed to run locally
 

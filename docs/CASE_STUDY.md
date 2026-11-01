@@ -1,4 +1,4 @@
-# RoomWise: connecting furniture evidence to room geometry
+# RoomWise: conversation, shopping pages, and a live room preview
 
 **Status:** collaborative software prototype
 
@@ -6,71 +6,68 @@
 
 **Repository:** https://github.com/Ansester/RoomWise
 
-**Stack:** Kotlin Multiplatform, SwiftUI, RoomPlan, ARKit/SceneKit, Compose Desktop, Groq, Tavily
+**Stack:** Kotlin Multiplatform, SwiftUI, RoomPlan, ARKit/SceneKit, Compose Desktop, Groq, Tavily, local HTTP pairing
 
-RoomWise checks a chair's floor footprint against captured room boundaries and recognized furniture. A native iPhone interface handles room capture and camera-based placement; a desktop companion imports the same room contract. Shared Kotlin code owns geometry and product-evidence rules.
+RoomWise connects three actions that otherwise happen separately: describing a purchase, browsing listings, and imagining the item in a room. A person can refine a chair request over several chat turns, move through product pages, and see the selected item change in the iPhone room preview. The desktop companion can drive that selection over a temporary local-network session.
 
-<img src="screenshots/iphone-sample-preview.png" width="330" alt="RoomWise sample room and dimension-based chair placement controls" />
+The current visual is a generic chair scaled to explicit assembled dimensions. The system does not retrieve every retailer's exact 3D asset or infer reliable dimensions from photographs. Its spatial result is a check of captured floor footprints, not a guarantee of real-world clearance.
 
-Hosted iPhone render with synthetic sample geometry and chair data. It demonstrates the implemented interface, not a live catalog result or a physical scanning evaluation.
+## The product loop
 
-## The engineering problem
+The central state is the **selected product**. The active shopping page sets that state. The room drawing, schematic/AR object, and local footprint calculation consume it. A paired desktop publishes the shortlist and selected ID, and the phone applies the corresponding state locally. That keeps page changes connected to preview changes instead of requiring a separate preview action for every listing.
 
-A furniture fit check joins two imperfect inputs. Room capture may miss walls or objects. A shopping listing may show package size, omit assembled dimensions, contain conflicting prices, or refer to a different variant. A language model can help interpret a request, but it cannot establish the room geometry or invent a missing measurement.
+The room belongs to the phone's workspace. Pairing transfers products and selection, not room geometry or AR alignment. A room JSON file can be transferred separately when both frontends should use the same measured geometry.
 
-The implementation therefore treats request interpretation, product evidence, and spatial calculation as separate stages. Each stage has its own validation and failure behavior. The resulting interface can show a useful preview while still withholding a fit conclusion when the required evidence is absent.
+A product without valid assembled dimensions clears the size-based preview. Leaving the previous chair visible would suggest that the new listing had a known size, so uncertainty needs to change the visual state as well as the text.
 
-This is an engineering motivation reflected in the code. It is not a finding from a user study or evidence that RoomWise improves purchasing outcomes.
+## Conversation that retains intent
 
-## A shared contract with native frontends
+The **Send** action returns both a natural-language reply and validated structured preferences. **Find matches** separately retrieves products: a nonempty draft is sent once first; with no draft, accepted preferences are used without a model call. A casual conversation turn does not automatically spend search credits. Recent messages and the current preferences provide context for refinements such as “make it white” or “under AED 300 instead.” The history and message sizes are bounded, and each turn permits one Groq request without retries or a paid-provider switch.
 
-The [room model](../shared/src/commonMain/kotlin/fitcheck/Models.kt) defines dimensions, positions, yaw, captured elements, and a versioned JSON format. Coordinates use metres and a right-handed Y-up, floor-XZ convention. The captured world origin and original transforms are retained rather than assuming every room is an axis-aligned rectangle.
+The supported model is `openai/gpt-oss-20b`, hosted by Groq. The model receives conversation and preferences rather than room coordinates, product excerpts, or fit-tool output. Product facts and placement results therefore remain outside the language model's authority.
 
-The [iPhone capture controller](../iosApp/RoomCaptureController.swift) manages RoomPlan's scan, processing, review, cancellation, and error phases. Exported geometry passes through the shared validation path. The [desktop application](../desktop/src/main/kotlin/fitcheck/App.kt) imports that contract and renders a room and candidate placement with Compose.
+Missing credentials, quota failures, invalid output, or unavailable networking select a clearly labelled deterministic fallback. It handles a limited set of refinements; it is not an offline LLM or proof that every request was understood. A sample workflow remains useful without provider accounts.
 
-The shared layer avoids duplicating the central geometry and evidence rules in two frontends. The UI remains platform-specific so iPhone can use native capture, camera permissions, Keychain, and ARKit.
+## Retrieval and evidence
 
-## Fit is a deterministic footprint calculation
+Tavily basic search discovers indexed Amazon UAE, Noon UAE, and Temu product pages. Returned URLs pass retailer-specific validation; explicit snippets are parsed locally for price and assembled dimensions. Search preferences guide discovery but do not prove that each hit satisfies the request.
 
-The geometry layer transforms all four corners of the candidate rectangle by its position and yaw. It checks those corners and the rectangle's edges against the floor polygon, including concave intrusions that a corner-only test can miss. Furniture overlap uses separating axes from both rotated rectangles; touching recognized furniture is treated conservatively as an overlap.
+Package sizes are not assembled sizes. Multiple conflicting prices or dimensions remain unknown. Manual measurements and pasted details carry user-entered provenance. Fixture, live, saved-live, and user-entered data remain distinguishable.
 
-Boundary reconstruction joins captured wall endpoints only when the connection is unambiguous within the configured 3 cm tolerance. Gaps, branching connections, degenerate loops, and self-intersections do not become a confirmed room boundary. A partial room can still be visualized, but boundary fit is withheld.
+The free path performs no extra page-extraction requests or advanced-search escalation. On iPhone, three retailer calls are reserved before dispatch against a local 300-request UTC-month allowance. That counter is not the provider account's authoritative balance. Chat turns, carousel page changes, and local pairing have separate behavior; page changes and pairing consume no hosted-provider calls.
 
-Initial placement first tries the room's centre and nearby positions. A bounded whole-room grid provides a fallback for concave rooms where the bounding-box centre is outside the usable floor. This finds a candidate when the tested locations permit one; it is not an optimization or a proof that all possible placements were searched.
+## Free local pairing
 
-These mechanisms are implemented in [Geometry.kt](../shared/src/commonMain/kotlin/fitcheck/Geometry.kt) and exercised in [CoreTest.kt](../shared/src/commonTest/kotlin/fitcheck/CoreTest.kt). A fit result concerns captured floor geometry. It does not check hidden obstacles, furniture motion, overhead clearance, door swing, or delivery routes.
+The desktop starts its built-in HTTP listener only when the user enables pairing. A random bearer token is included in the private URL. The phone reads revisioned snapshots containing the product list and selected ID; selection mutations accept only IDs already in the session.
 
-## AI interprets requirements; it does not supply measurements
+This avoids a hosted backend, shared developer account, database, or relay subscription. It also creates a clear transport limitation: the connection is plain HTTP for a trusted local network, not encrypted public-internet communication. The link is a temporary secret and should not be published. Stopping pairing closes the session; a new session uses a new token.
 
-The default iPhone shopping path sends the chair request to hosted Groq using a constrained JSON schema. The output is validated as preferences such as budget, colour, required features, and maximum size. The LLM receives no room coordinates and does not generate product dimensions, prices, or a fit verdict. The desktop Groq tool surface is restricted to recording preferences; retailer and room tools remain local.
+The listener is a narrow product-selection interface. It does not expose filesystem access, credentials, arbitrary web proxying, chat history, or room coordinates. The [protocol guide](LIVE_SHOPPING.md) records its wire contract and troubleshooting boundaries.
 
-Tavily basic search then discovers indexed product pages from the supported retailer domains. Listing URLs are checked against retailer and product-path rules. Product fields are extracted conservatively from the returned evidence. Package dimensions cannot stand in for assembled dimensions, and multiple conflicting values remain unknown. Users can enter their own measurements or paste listing details, with that provenance retained.
+## Local geometry and rendering
 
-The iPhone path makes at most one Groq call and three basic retailer-search requests per search. Its per-install allowance reserves all three Tavily calls before dispatch, counts failures and cancellation against that reservation, and uses a 300-request UTC-month cap. That local counter is separate from provider account quotas and external billing choices. Missing keys or exhausted search access leave direct retailer browsing and manual entry available.
+Shared Kotlin code supplies immutable room/product contracts, serialization, scan validation, rotated footprints, boundary containment, recognized-object overlap, and candidate placement. Both frontends use those contracts while retaining native presentation layers.
 
-See [the pipeline implementation](../iosApp/FreeShopping.swift), [product extraction](../shared/src/commonMain/kotlin/fitcheck/ProductExtraction.kt), and the [shopping pipeline guide](SHOPPING_PIPELINE.md). Discovery is indexed web search, not exhaustive Amazon catalog access or verified live stock.
+The geometry accounts for rotation and concave room boundaries. Incomplete scans withhold a complete-boundary conclusion. Bounded initial-placement/recenter logic finds a candidate rather than claiming an optimal layout. Exact mathematical limits are documented in [geometry](GEOMETRY.md).
 
-## Failure states are part of the product
+SwiftUI coordinates the phone workspace, while RoomPlan handles supported capture and ARKit/SceneKit provide the physical/rehearsal previews. The schematic's aggregate dimensions are normalized to the product's explicit size. Product changes replace the object geometry while retaining a usable existing AR placement; tracking and surface accuracy remain hardware concerns.
 
-RoomWise explicitly distinguishes synthetic examples, live search evidence, saved live evidence, and user-entered information. Restoring a session preserves those distinctions, including an empty prior search. Request identifiers and task cancellation keep stale callbacks from replacing a newer search state.
+## Data ownership and failure behavior
 
-The iPhone interface exposes import errors, incomplete room boundaries, missing dimensions, retailer failures, and provider limits. Sample mode is available without network accounts. The user can revoke provider sharing, delete locally saved planning data, and clear keys through the separate credential controls. The [privacy policy](PRIVACY.md) describes those data flows and their limits.
+Phone provider keys use Keychain and are not embedded into any build configuration. The desktop uses session keys or explicitly supplied local configuration. Groq receives bounded conversation; Tavily receives search requirements; neither receives room/camera data through this pipeline.
 
-These are specific implementation choices rather than a general claim of complete security, privacy, or error freedom.
+Request cancellation and session identity prevent stale search callbacks from overwriting newer state. Pairing has a separate disconnect lifecycle. Local planning data, provider keys, and the anti-reset request allowance have distinct deletion controls. Website visits and exported room files have their own data lifecycles.
 
-## Verification and what remains unknown
+## Verification and limits
 
-The [local validation record](VALIDATION.md) documents **67 passing automated tests** across shared geometry, desktop shopping, desktop UI smoke checks, and iOS XCTest. It also records an unsigned iPhone build and Release archive, source/resource checks, and ten hosted interface renders. Representative screenshots were visually inspected.
+The repository provides automated tests for shared geometry, product evidence, mocked conversation/provider behavior, local protocol state, desktop UI, and iPhone rendering/state. The [validation record](VALIDATION.md) names the exact completed commands, tested revisions, and scope. A previous green build must not be treated as verification of later changes.
 
-Provider tests use HTTP mocks, which make quota, cancellation, malformed-data, and request-boundary behavior reproducible without using credentials or credits. They do not establish authenticated live-service reliability. Hosted renders establish a bounded view of the interface, not complete touch-navigation, camera, or AR testing. Current physical-device behavior and user outcomes were not reverified in that release work.
+Mocked providers do not establish authenticated endpoint availability or search usefulness. Loopback protocol checks do not establish that two physical devices can communicate on every network. Hosted views do not establish camera AR tracking, retailer compatibility, user benefit, adoption, or reduced returns. Those require separate recorded acceptance or evaluation.
 
-There are no recorded measurements of user adoption, reduced furniture returns, time savings, real-world fit accuracy, or improved purchase confidence. The source release makes the engineering work inspectable; it does not turn those unmeasured outcomes into results.
+## Further reading
 
-## What a reviewer can inspect
-
-- [Architecture](ARCHITECTURE.md): module and service boundaries.
-- [Geometry](GEOMETRY.md): coordinate conventions, containment, collisions, and limits.
-- [Shopping pipeline](SHOPPING_PIPELINE.md): requirements, retrieval, evidence, quotas, and fallback behavior.
-- [User guide](USER_GUIDE.md) and [development guide](DEVELOPMENT.md): running and extending a clone.
-- [Claims guide](CLAIMS.md): wording suitable for a portfolio, CV, or presentation.
-- [Contributor record](CONTRIBUTORS.md): collaborative attribution across the public source snapshot.
+- [Live-shopping workflow and protocol](LIVE_SHOPPING.md)
+- [Architecture](ARCHITECTURE.md) and [shopping pipeline](SHOPPING_PIPELINE.md)
+- [Geometry](GEOMETRY.md) and [room format](ROOM_FORMAT.md)
+- [Development](DEVELOPMENT.md) and [validation](VALIDATION.md)
+- [Prepared CV/website copy](PORTFOLIO.md) and [claim ledger](CLAIMS.md)

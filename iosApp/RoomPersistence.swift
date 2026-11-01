@@ -300,6 +300,7 @@ enum RoomPersistence {
     /// Provider credentials have a separate, explicit Keychain deletion action.
     static func clearSavedData() {
         clearSession()
+        ShoppingChatStore.clear()
         let exportURL = FileManager.default.temporaryDirectory.appendingPathComponent("RoomWise-room.json")
         try? FileManager.default.removeItem(at: exportURL)
     }

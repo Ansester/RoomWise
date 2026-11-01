@@ -36,11 +36,15 @@ project = (root / "iosApp/FitCheck.xcodeproj/project.pbxproj").read_text()
 for marker in ("ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon", "CURRENT_PROJECT_VERSION", "MARKETING_VERSION", "PrivacyInfo.xcprivacy in Resources"):
     if marker not in project:
         errors.append(f"Missing app release configuration: {marker}")
+lan_info = plistlib.loads((root / "iosApp/Info.plist").read_bytes())
+ats = lan_info.get("NSAppTransportSecurity", {})
+if ats != {"NSAllowsLocalNetworking": True} or not lan_info.get("NSLocalNetworkUsageDescription"):
+    errors.append("Pairing must declare local-network use without a global insecure-load exception")
 manifest = plistlib.loads((root / "iosApp/PrivacyInfo.xcprivacy").read_bytes())
 if manifest.get("NSPrivacyTracking") is not False:
     errors.append("Unexpected tracking configuration")
-if {entry["NSPrivacyCollectedDataType"] for entry in manifest.get("NSPrivacyCollectedDataTypes", [])} != {"NSPrivacyCollectedDataTypeSearchHistory", "NSPrivacyCollectedDataTypeUserID"}:
-    errors.append("Privacy collection categories must match optional Groq/Tavily search/authentication")
+if {entry["NSPrivacyCollectedDataType"] for entry in manifest.get("NSPrivacyCollectedDataTypes", [])} != {"NSPrivacyCollectedDataTypeSearchHistory", "NSPrivacyCollectedDataTypeUserID", "NSPrivacyCollectedDataTypeOtherUserContent"}:
+    errors.append("Privacy collection categories must match optional Groq/Tavily conversation/search/authentication")
 reasons = {x["NSPrivacyAccessedAPIType"]: x["NSPrivacyAccessedAPITypeReasons"] for x in manifest["NSPrivacyAccessedAPITypes"]}
 if "CA92.1" not in reasons.get("NSPrivacyAccessedAPICategoryUserDefaults", []):
     errors.append("Missing app-only UserDefaults privacy reason")

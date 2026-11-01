@@ -1,6 +1,6 @@
 # iPhone hardware and future-release acceptance record
 
-This optional future iPhone hardware/distribution checklist does not block completion of the standalone GitHub project. The hosted request parser is independent of the device running the clone. Automatic features use each clone's own Groq free-plan and Tavily Researcher free-tier keys. Historical demos do not complete these hardware/provider checks.
+This optional future iPhone hardware/distribution checklist does not block completion of the standalone GitHub project. The hosted shopping conversation is independent of the device running the clone. Automatic features use each clone's own Groq free-plan and Tavily Researcher free-tier keys. Historical demos do not complete these hardware/provider checks.
 
 | Record | Value |
 | --- | --- |
@@ -17,10 +17,11 @@ Use a signed Release build on a trusted physical iPhone. Local device signing is
 ## Local planning
 
 - [ ] Launch/relaunch without credentials/network. Sample content is clearly labelled; no remote request starts automatically.
-- [ ] Select sample chairs; drag, rotate, and recenter. Comparison/fit follows the chair and pose.
+- [ ] Swipe/step through sample product pages. The selected item changes the phone object immediately; unknown assembled dimensions clear the previous object. Drag, rotate, and recenter; comparison/fit follows the selected chair and pose.
+- [ ] Continue a shopping conversation over several turns; change colour/budget/features, remove a constraint, and start a new chat. Verify contextual replies/preferences and explicit local fallback labels.
 - [ ] Edit assembled dimensions. Check user-entered labels, updated preview, and rejection of invalid/oversized values.
-- [ ] With permission and a Groq free-plan key, parse chair requirements using the default hosted openai/gpt-oss-20b model. Verify no room data is in the request. Repeat with no/invalid key and a provider error; verify deterministic fallback without any paid-provider retry.
-- [ ] Open a retailer link deliberately; check its actual external browser destination. Add a chair through pasted text/manual entry and confirm provenance, unknown dimensions, prices/currencies, and relaunch persistence.
+- [ ] With permission and a Groq free-plan key, continue a shopping conversation using the default hosted openai/gpt-oss-20b model. Verify no room data is in the request. Repeat with no/invalid key and a provider error; verify deterministic fallback without any paid-provider retry.
+- [ ] Load a known retailer page deliberately; confirm ephemeral browsing, and that following another page pauses preview. Check the external browser destination when opened externally. Add a chair through pasted text/manual entry and confirm provenance, unknown dimensions, prices/currencies, and relaunch persistence.
 - [ ] Cancel processing, switch sample mode, and change rooms; late results must not overwrite the new session.
 - [ ] Export/import room JSON; cancel import and test malformed JSON without breaking the active room.
 - [ ] Delete planning data in Help & Privacy and relaunch. Old saved planning data should be gone and samples shown. Exported files remain under the user's control. Deletion must not reset the separately maintained monthly request budget.
@@ -31,18 +32,26 @@ No live provider test is implied by this checklist. Use an owner-controlled **fr
 
 - [ ] Save Groq and Tavily keys through Connections; relaunch and verify non-secret saved status. No paid OpenAI API key is offered. Only requests to the respective providers should carry each credential.
 - [ ] Cancel the sharing-permission prompt before first automatic search; no request should start. Allow it on the next attempt and inspect results/statuses.
-- [ ] Confirm the request path uses basic search only, at most three requests for a search, no extract/advanced calls, and no automatic retries. Groq requests should contain only the chair query; Tavily searches should contain parsed chair requirements. Both authenticate to their respective providers; neither includes room geometry/summaries or camera images.
+- [ ] Confirm the request path uses basic search only, at most three requests for a search, no extract/advanced calls, and no automatic retries. Groq requests should contain only bounded conversation and structured preferences; Tavily searches should contain parsed chair requirements. Both authenticate to their respective providers; neither includes room geometry/summaries or camera images.
 - [ ] Inspect actual retailer results, exact URLs, dimensions/evidence, and price currencies. Record incomplete coverage and zero results honestly; never infer a complete Amazon/Noon/Temu catalogue.
 - [ ] Verify missing-key, denied-permission, provider quota/error, and local monthly-cap states show useful browser/manual fallback. Do not consume hundreds of live credits to test the cap; use the automated injected-budget/transport tests for that boundary.
 - [ ] Cancel a search and quickly start another; old results must not replace the new state. Relaunch after results/zero results and inspect provenance.
 - [ ] Revoke permission and clear the key; future search should ask again and require a key. Confirm no credential appears in exports, app diagnostics, or screenshots. Use the provider account to revoke temporary credentials after testing if appropriate.
+
+## Optional local paired browsing
+
+- [ ] Start pairing on desktop and connect the phone on the same trusted Wi-Fi using its private URL. Record operating systems, network type, and permissions, never the token.
+- [ ] Change desktop product pages repeatedly and confirm the phone's product/preview follows. Change phone selection and confirm desktop follows. Verify no provider request is made by a page change.
+- [ ] Select a product with unknown dimensions; the previous object must disappear. Restore a valid product and verify its dimensions/label and retained usable placement.
+- [ ] Stop/restart pairing and verify the old URL is invalid. Disconnect/reconnect the phone, deny local-network permission, background/resume, and test a temporarily unreachable host without stale preview changes.
+- [ ] Verify the session transmits products/selection only, not keys, chat, rooms, or camera data. Do not expose the listener publicly.
 
 ## Camera and hardware
 
 - [ ] Deny camera access on a LiDAR iPhone; check the actionable state and dismissal. Grant it in system Settings and retry.
 - [ ] Scan, finish, review, accept, and relaunch. Record actual complete/partial quality.
 - [ ] Accept an incomplete scan and confirm boundary fit is withheld. Cancel another scan, background/resume, and start again without a stale callback/crash.
-- [ ] In physical AR, detect a surface and place/adjust the chair. Compare against a known measured reference for gross scaling errors; this is a dimensional preview, not precision measurement.
+- [ ] In physical AR, detect a surface and place/adjust the chair. Change the selected product while AR remains open; verify the object changes dimensions without retaining the prior listing or losing a valid placement. Compare against a known measured reference for gross scaling errors; this is a dimensional preview, not precision measurement.
 - [ ] On a supported non-LiDAR iPhone, sample/import remain usable and scanning is honestly unavailable. Check the smallest available screen, increased text, keyboard dismissal, menus, sheets, and accessibility labels. Do not claim an App Store accessibility capability before testing its full flow.
 
 ## Outcome

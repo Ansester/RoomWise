@@ -4,6 +4,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -18,6 +19,7 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.*
 import kotlinx.coroutines.*
+import kotlinx.serialization.encodeToString
 import java.awt.FileDialog
 import java.awt.Frame
 import java.awt.Desktop
@@ -48,6 +50,18 @@ fun requirementFailures(p: Product, r: Preferences): Int =
     } + (if (r.maxWidth != null && (p.previewSize()?.width ?: Double.MAX_VALUE) > r.maxWidth!!) 1 else 0) +
         (if (r.maxDepth != null && (p.previewSize()?.depth ?: Double.MAX_VALUE) > r.maxDepth!!) 1 else 0)
 
+internal fun sampleMatchesPreferences(product: Product, request: Preferences): Boolean {
+    if (budgetStatus(product, request) != EvidenceStatus.SUPPORTED) return false
+    if (request.colour != null && product.features.none { it.name.equals(request.colour, true) && it.status == EvidenceStatus.SUPPORTED }) return false
+    val size = product.previewSize()
+    if (request.maxWidth != null && (size == null || size.width > request.maxWidth!!)) return false
+    if (request.maxDepth != null && (size == null || size.depth > request.maxDepth!!)) return false
+    return request.requiredFeatures.all { name ->
+        if (name.equals("without armrests", true)) product.features.any { it.name.equals("armrests", true) && it.status == EvidenceStatus.UNSUPPORTED }
+        else product.features.any { it.name.equals(name, true) && it.status == EvidenceStatus.SUPPORTED }
+    }
+}
+
 fun featureLabel(status: EvidenceStatus): String = when (status) {
     EvidenceStatus.SUPPORTED -> "Listed"
     EvidenceStatus.UNSUPPORTED -> "Not listed"
@@ -58,8 +72,9 @@ fun featureLabel(status: EvidenceStatus): String = when (status) {
 fun FitCheck() = RoomWiseApp()
 
 @Composable
-fun RoomWiseApp() {
-    val config = remember { RuntimeConfig() }
+fun RoomWiseApp(configOverride: RuntimeConfig? = null, conversationTransport: ConversationTransport? = null) {
+    val config = remember(configOverride) { configOverride ?: RuntimeConfig() }
+    val chatTransport = remember(conversationTransport) { conversationTransport ?: GroqConversationTransport() }
     var room by remember { mutableStateOf<Room?>(null) }
     var products by remember { mutableStateOf(emptyList<Product>()) }
     var selectedId by remember { mutableStateOf<String?>(null) }
@@ -70,8 +85,8 @@ fun RoomWiseApp() {
 
     // A fresh checkout always starts offline. Explicit local/Groq launches may opt into live search.
     var saved by remember {
-        mutableStateOf(config.provider == "fixture" || config.tavilyKey.isBlank() ||
-            (config.provider == "groq" && config.llmKey.isBlank()))
+        // Provider choice is explicit. Missing catalog access must not disable Groq chat.
+        mutableStateOf(config.provider == "fixture")
     }
 
     var stores by remember { mutableStateOf(emptyMap<String, String>()) }
@@ -85,6 +100,130 @@ fun RoomWiseApp() {
 
     var manualFor by remember { mutableStateOf<Product?>(null) }
     var settings by remember { mutableStateOf(false) }
+    val messages = remember { mutableStateListOf<ChatMessage>() }
+    var showPairing by remember { mutableStateOf(false) }
+    var pairingUrls by remember { mutableStateOf(emptyList<String>()) }
+    val pairing = remember {
+        LivePreviewSession { id ->
+            scope.launch {
+                products.firstOrNull { it.id == id }?.let {
+                    selectedId = id
+                }
+            }
+        }
+    }
+    DisposableEffect(pairing) { onDispose { pairing.close() } }
+    LaunchedEffect(products, selectedId) { pairing.publish(products, selectedId) }
+
+    fun selectProduct(product: Product) {
+        selectedId = product.id
+        // Preserve the placement while browsing; replace the dimensions immediately.
+        activity.add("Selected: ${product.title.take(50)}")
+        if (activity.size > 40) activity.removeAt(0)
+    }
+
+    fun newChat() {
+        messages.clear()
+        request = Preferences()
+        prompt = ""
+        status = "New conversation. Describe the chair you want."
+    }
+
+    suspend fun interpretMessage(text: String): ChatTurn {
+        messages.add(ChatMessage("user", text))
+        while (messages.size > 24) messages.removeAt(0)
+        val turn = ShoppingConversation.reply(
+            messages.toList(), request,
+            groqKey = if (!saved && config.provider == "groq") config.llmKey else "",
+            model = config.model, transport = chatTransport
+        )
+        messages.add(ChatMessage("assistant", turn.reply))
+        request = turn.preferences
+        activity.add(turn.engineLabel)
+        return turn
+    }
+
+    fun sendMessage() {
+        val text = prompt.trim().take(1500)
+        if (text.isEmpty() || isSearching) return
+        prompt = ""
+        isSearching = true
+        job = scope.launch {
+            try {
+                val turn = interpretMessage(text)
+                status = "${turn.engineLabel} · preferences updated. Choose Find matches when ready."
+            } catch (error: CancellationException) {
+                status = "Conversation cancelled. Shopping pages preserved."
+                throw error
+            } catch (_: Exception) {
+                status = "Could not complete that message. Try again or use Sample mode."
+            } finally {
+                isSearching = false
+                while (messages.size > 24) messages.removeAt(0)
+                while (activity.size > 40) activity.removeAt(0)
+            }
+        }
+    }
+
+    fun findMatches() {
+        if (isSearching) return
+        val draft = prompt.trim().take(1500)
+        prompt = ""
+        val previousProducts = products
+        val previousSelectedId = selectedId
+        val previousStores = stores
+        isSearching = true
+        job = scope.launch {
+            try {
+                // Find matches accepts a draft directly, through the same one-call chat path.
+                if (draft.isNotEmpty()) interpretMessage(draft)
+                if (!saved && config.tavilyKey.isBlank()) {
+                    settings = true
+                    status = "Preferences updated. Add your free Tavily key to search, or turn on Sample mode."
+                    return@launch
+                }
+                if (room == null) room = demoRoom()
+                if (saved) {
+                    products = demoProducts().filter { sampleMatchesPreferences(it, request) }
+                    stores = mapOf("Amazon UAE" to "Sample fixture", "Noon UAE" to "Sample fixture", "Temu" to "Sample fixture")
+                    status = if (products.isEmpty()) "No sample fixtures match these preferences. No retailer requests were made."
+                        else "${products.size} matching sample shopping pages. No retailer requests were made."
+                } else {
+                    products = emptyList()
+                    selectedId = null
+                    stores = emptyMap()
+                    status = "Searching retailer listings…"
+                    val tools = ShoppingTools(room!!, TavilyProvider(config.tavilyKey),
+                        log = { activity.add(it) },
+                        onStore = { name, result ->
+                            stores = stores + (name to result.status)
+                            products = products.filter { it.retailer != name } + result.products
+                            if (selectedId == null) selectedId = products.firstOrNull()?.id
+                        },
+                        onPreview = { id, position -> selectedId = id; pose = position })
+                    check(tools.set_preferences(roomJson.encodeToString(request)) == "Preferences accepted")
+                    tools.finishRetrieval()
+                    status = "${products.size} shopping pages · swipe to change the room preview."
+                }
+                if (products.none { it.id == selectedId }) selectedId = products.firstOrNull()?.id
+            } catch (error: CancellationException) {
+                products = previousProducts
+                selectedId = previousSelectedId
+                stores = previousStores
+                status = "Cancelled. Previous shopping pages preserved."
+                throw error
+            } catch (_: Exception) {
+                products = previousProducts
+                selectedId = previousSelectedId
+                stores = previousStores
+                status = "Could not complete retrieval. Previous shopping pages preserved."
+            } finally {
+                isSearching = false
+                while (messages.size > 24) messages.removeAt(0)
+                while (activity.size > 40) activity.removeAt(0)
+            }
+        }
+    }
 
     val selected = products.find { it.id == selectedId }
     val dimensions = selected?.previewSize()
@@ -118,6 +257,7 @@ fun RoomWiseApp() {
 
     fun loadSampleRoom() {
         saved = true
+        messages.clear()
         room = demoRoom()
         products = demoProducts()
         request = parseFixtureRequest(prompt)
@@ -162,6 +302,9 @@ fun RoomWiseApp() {
                     }
 
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = { showPairing = true }, shape = RoundedCornerShape(6.dp)) {
+                            Text(if (pairingUrls.isEmpty()) "Pair phone" else "Pair phone · On", fontSize = 12.sp)
+                        }
                         OutlinedButton(
                             onClick = { settings = true },
                             enabled = !isSearching,
@@ -374,197 +517,16 @@ fun RoomWiseApp() {
                         }
                     }
 
-                    // ── RIGHT: SHOPPING SIDEBAR (~40%) ──
-                    Column(Modifier.weight(1.0f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Find furniture", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Forest)
-                        Text("Describe the chair you’re looking for.", color = TextMuted, fontSize = 12.sp)
-
-                        OutlinedTextField(
-                            value = prompt,
-                            onValueChange = { prompt = it.take(2000) },
-                            modifier = Modifier.fillMaxWidth(),
-                            minLines = 2,
-                            maxLines = 3,
-                            shape = RoundedCornerShape(8.dp),
-                            placeholder = { Text("e.g. Black office chair with armrests under AED 400") }
-                        )
-
-                        // Mode toggle & search action
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Switch(
-                                checked = saved,
-                                onCheckedChange = { saved = it },
-                                enabled = !isSearching,
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = Color.White,
-                                    checkedTrackColor = Forest,
-                                    uncheckedThumbColor = Color.White,
-                                    uncheckedTrackColor = SageBorder
-                                )
-                            )
-                            Text(
-                                if (saved) "Sample mode" else "Live search",
-                                modifier = Modifier.weight(1f),
-                                color = TextPrimary,
-                                fontSize = 12.sp
-                            )
-                            if (isSearching) {
-                                TextButton(
-                                    onClick = {
-                                        job?.cancel()
-                                        status = "Search cancelled. Previous results preserved."
-                                    },
-                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                                ) {
-                                    Text("Cancel", color = Amber, fontSize = 12.sp)
-                                }
-                            }
-                            Button(
-                                enabled = room != null && !isSearching && prompt.isNotBlank(),
-                                onClick = {
-                                    if (!saved) {
-                                        val liveProviderValid = config.provider in listOf("fixture", "local", "groq")
-                                        val hasKeys = liveProviderValid && config.tavilyKey.isNotBlank() &&
-                                            (config.provider != "groq" || (config.llmKey.isNotBlank() && config.model.isNotBlank()))
-                                        if (!hasKeys) {
-                                            settings = true
-                                            status = if (!liveProviderValid) "Select local or Groq parsing in Connections, or use sample mode."
-                                                     else if (config.tavilyKey.isBlank()) "Live retrieval needs your Tavily free-plan key. Sample mode works without keys."
-                                                     else "Groq needs your free-plan key and model ID. Choose local parsing to search without an LLM."
-                                            return@Button
-                                        }
-                                    }
-
-                                    val previousProducts = products
-                                    val previousSelectedId = selectedId
-                                    val previousPose = pose
-                                    val previousStores = stores
-                                    products = emptyList()
-                                    selectedId = null
-                                    stores = emptyMap()
-                                    activity.clear()
-
-                                    job = scope.launch {
-                                        isSearching = true
-                                        try {
-                                            val service = ShoppingSession(
-                                                room!!, saved, config, ::log,
-                                                onStore = { name, result ->
-                                                    stores = stores + (name to result.status)
-                                                    products = products.filter { it.retailer != name } + result.products
-                                                },
-                                                onPreview = { id, p -> selectedId = id; pose = p }
-                                            )
-                                            request = service.run(prompt)
-                                            if (products.none { it.id == selectedId }) {
-                                                val first = products.firstOrNull { it.previewSize() != null } ?: products.firstOrNull()
-                                                selectedId = first?.id
-                                                pose = initialPlacement(room!!, first?.previewSize())
-                                            }
-                                            status = "Found ${products.size} candidates across retailers."
-                                        } catch (e: CancellationException) {
-                                            status = "Search cancelled. Previous results preserved."
-                                            products = previousProducts
-                                            selectedId = previousSelectedId
-                                            pose = previousPose
-                                            stores = previousStores
-                                            throw e
-                                        } catch (_: Exception) {
-                                            status = "Search failed. Check Connections or try sample mode."
-                                            products = previousProducts
-                                            selectedId = previousSelectedId
-                                            pose = previousPose
-                                            stores = previousStores
-                                            log("Search error")
-                                        } finally {
-                                            isSearching = false
-                                        }
-                                    }
-                                },
-                                shape = RoundedCornerShape(6.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Forest),
-                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
-                            ) {
-                                Text(if (isSearching) "Searching…" else "Search", fontSize = 13.sp)
-                            }
-                        }
-
-                        // Three equal-width retailer status cells
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            listOf("Amazon UAE", "Noon UAE", "Temu").forEach { storeName ->
-                                val storeStatus = stores[storeName] ?: if (saved) "Ready (sample)" else "Ready"
-                                Box(
-                                    Modifier.weight(1f).background(SageSurface, RoundedCornerShape(6.dp)).padding(horizontal = 6.dp, vertical = 4.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(storeName, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
-                                        Text(storeStatus, fontSize = 9.sp, color = TextMuted, maxLines = 1)
-                                    }
-                                }
-                            }
-                        }
-
-                        Text(status, fontSize = 11.sp, color = TextMuted, maxLines = 1)
-
-                        // Scrollable shortlist of products
-                        Column(
-                            Modifier.weight(1f).verticalScroll(rememberScrollState()),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            val ranked = products.sortedWith(
-                                compareBy<Product> { requirementFailures(it, request) }
-                                    .thenBy { budgetStatus(it, request) != EvidenceStatus.SUPPORTED }
-                                    .thenBy { p -> room?.let { rr -> p.previewSize()?.let { checkPlacement(rr, it, pose).fits } } != true }
-                                    .thenBy { if (it.currency == request.currency) it.price ?: Double.MAX_VALUE else Double.MAX_VALUE }
-                            )
-                            val lowest = products.filter { it.currency == request.currency && it.price != null }.minOfOrNull { it.price!! }
-
-                            ranked.forEach { p ->
-                                val isLowestSatisfying = lowest != null && p.price == lowest &&
-                                    requirementFailures(p, request) == 0 &&
-                                    budgetStatus(p, request) == EvidenceStatus.SUPPORTED
-
-                                ProductCard(
-                                    p = p,
-                                    selected = p.id == selectedId,
-                                    r = request,
-                                    isLowest = isLowestSatisfying,
-                                    select = {
-                                        selectedId = p.id
-                                        log("Selected: ${p.title.take(50)}")
-                                        if (p.previewSize() == null) manualFor = p else log("Checked placement in room")
-                                    },
-                                    manual = { manualFor = p }
-                                )
-                            }
-                        }
-
-                        // Collapsible Search Details panel
-                        Card(
-                            Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp),
-                            colors = CardDefaults.cardColors(containerColor = SageSurface)
-                        ) {
-                            Column(Modifier.fillMaxWidth().padding(8.dp)) {
-                                Row(
-                                    Modifier.fillMaxWidth().clickable { showActivity = !showActivity },
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text("Search details (${activity.size})", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = TextPrimary)
-                                    Text(if (showActivity) "▲" else "▼", fontSize = 10.sp, color = TextMuted)
-                                }
-                                if (showActivity) {
-                                    Spacer(Modifier.height(4.dp))
-                                    Column(Modifier.heightIn(max = 90.dp).verticalScroll(rememberScrollState())) {
-                                        activity.takeLast(8).forEach { Text("• $it", fontSize = 10.sp, color = TextPrimary) }
-                                        if (activity.isEmpty()) Text("No recent operations", fontSize = 10.sp, color = TextMuted)
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    ConnectedShoppingSidebar(
+                        messages = messages.toList(), prompt = prompt, onPrompt = { prompt = it },
+                        searching = isSearching, sampleMode = saved,
+                        onMode = { saved = it; newChat() },
+                        onSend = ::sendMessage, onFindMatches = ::findMatches, onCancel = { job?.cancel() }, onNewChat = ::newChat,
+                        products = products, selectedId = selectedId, request = request,
+                        onSelect = ::selectProduct, onEdit = { manualFor = it },
+                        stores = stores, status = status,
+                        modifier = Modifier.weight(1f).fillMaxHeight()
+                    )
                 }
             }
         }
@@ -579,6 +541,31 @@ fun RoomWiseApp() {
             }
         }
 
+        if (showPairing) {
+            AlertDialog(
+                onDismissRequest = { showPairing = false },
+                title = { Text("Live phone preview") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("Put this computer and iPhone on the same trusted Wi-Fi. On iPhone, open Room actions → Pair with desktop and paste the pairing link.")
+                        Text("Only the shopping listings and selected item are shared. Room scans, chat and API keys stay on their device. This local HTTP link is a temporary secret; anyone with it on this network can select an item.", fontSize = 12.sp)
+                        if (pairingUrls.isNotEmpty()) {
+                            Text("Pairing is on. Use the address for your Wi-Fi network.", fontWeight = FontWeight.SemiBold)
+                            SelectionContainer { Text(pairingUrls.joinToString("\n\n"), fontSize = 12.sp) }
+                            Text("A 127.0.0.1 address works only with Simulator on this computer. A phone needs your computer’s Wi-Fi address. If pairing is blocked, allow local connections in your firewall.", fontSize = 11.sp)
+                        }
+                    }
+                },
+                confirmButton = {
+                    if (pairingUrls.isEmpty()) Button(onClick = {
+                        runCatching { pairing.start() }.onSuccess { pairingUrls = it }
+                            .onFailure { status = "Could not start pairing. Check local network access." }
+                    }) { Text("Start pairing") }
+                    else Button(onClick = { pairing.close(); pairingUrls = emptyList() }) { Text("Stop pairing") }
+                },
+                dismissButton = { TextButton(onClick = { showPairing = false }) { Text("Done") } }
+            )
+        }
         if (settings) {
             ConnectionDialog(config) { settings = false }
         }

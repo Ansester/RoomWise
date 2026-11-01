@@ -14,6 +14,16 @@ extension Product: @retroactive Identifiable {}
 
 @main
 struct FitCheckApp: App {
+    init() {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-roomwise-ui-testing") {
+            RoomPersistence.clearSavedData()
+            ShoppingChatStore.clear()
+            RoomPersistence.saveSampleMode(true)
+            RoomPersistence.saveLastQuery("")
+        }
+        #endif
+    }
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -24,9 +34,17 @@ struct FitCheckApp: App {
 
 struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
-    @AppStorage("roomwise_groq_tavily_search_consent_v2") private var liveSearchConsent = false
+    @AppStorage("roomwise_groq_tavily_chat_consent_v3") private var liveSearchConsent = false
     @StateObject private var capture = RoomCaptureController()
     @StateObject private var credentials = SessionCredentials()
+    @StateObject private var pairing = LivePhoneSession()
+    @State private var showPairing = false
+    @State private var previewPaused = false
+    @State private var consentForChat = false
+    @State private var chatMessages = ShoppingChatStore.loadMessages()
+    @State private var chatPreferences = ShoppingChatStore.loadPreferences()
+    @State private var showConversation = true
+    @FocusState private var chatFocused: Bool
 
     @State private var activeRoom: Room
     @State private var queryText: String
@@ -81,8 +99,15 @@ struct ContentView: View {
         _statusBanner = State(initialValue: saved == nil ? "Sample room · explore offline or scan your own space" : "Saved room and chair selection restored")
     }
 
+    private var retailerQuery: String {
+        guard let preferences = chatPreferences else { return queryText }
+        var parts = [preferences.colour, "chair", preferences.requiredFeatures.joined(separator: " ")].compactMap { $0 }.filter { !$0.isEmpty }
+        if let budget = preferences.budget { parts.append("under \(preferences.currency) \(budget.doubleValue)") }
+        return parts.joined(separator: " ")
+    }
+
     private var productProvenanceBadge: (text: String, color: Color) {
-        if sampleMode {
+        if !products.isEmpty && products.allSatisfy({ $0.provenance == .fixture }) {
             return ("SAMPLE DATA", forestGreen)
         }
         if products.isEmpty {
@@ -171,6 +196,9 @@ struct ContentView: View {
                             Button(action: { cancelSearch(); showConnections = true }) {
                                 Label("Connections", systemImage: "key")
                             }
+                            Button(action: { showPairing = true }) {
+                                Label("Pair with desktop", systemImage: "iphone.radiowaves.left.and.right")
+                            }
                             Button(action: { showHelp = true }) {
                                 Label("Help & Privacy", systemImage: "questionmark.circle")
                             }
@@ -184,45 +212,10 @@ struct ContentView: View {
                     .padding(.horizontal)
                     .padding(.top, 4)
 
-                    if activeRoom.savedDemo {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Know your space before you buy.")
-                                .font(.title2.bold())
-                                .foregroundColor(forestGreen)
-                            Text("Explore the sample below, or scan your room to check a chair against your walls and furniture.")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                            Button { showScanSheet = true } label: {
-                                Label("Scan my room", systemImage: "viewfinder")
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .tint(forestGreen)
-                            Text("Room scanning requires an iPhone with LiDAR. Import and dimension previews work without it.")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding()
-                        .background(sageSurface, in: RoundedRectangle(cornerRadius: 14))
-                        .padding(.horizontal)
-                    }
-
-                    // 2. Room Floor Plan & Placement Canvas
-                    FloorPlanCanvas(
-                        room: activeRoom,
-                        selectedProduct: selectedProduct,
-                        pose: $chairPose,
-                        onPoseChange: {
-                            chairPose = $0
-                            persistCurrentSession()
-                        }
-                    )
-                    .padding(.horizontal)
-
                     // 3. Shopping Sidebar / Discovery
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
-                            Text("Find furniture.")
+                            Text("Talk. Browse. See it in your room.")
                                 .font(.headline)
                                 .foregroundColor(charcoalText)
                             Spacer()
@@ -235,32 +228,56 @@ struct ContentView: View {
                                 .clipShape(Capsule())
                                 .overlay(Capsule().stroke(productProvenanceBadge.color.opacity(0.3), lineWidth: 1))
                         }
-                        Text("Describe the chair you’re looking for.")
+                        Text("Chat about the chair you want, refine your request, then find matches and swipe the shopping pages.")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
 
-                        // Search Input
-                        HStack(spacing: 8) {
-                            TextField("e.g. Black office chair with armrests", text: $queryText)
-                                .textFieldStyle(.roundedBorder)
-                                .autocorrectionDisabled()
-
-                            if isSearching {
-                                Button("Cancel") {
-                                    cancelSearch()
+                        DisclosureGroup("Conversation (\(chatMessages.count))", isExpanded: $showConversation) {
+                            ScrollViewReader { proxy in
+                                ScrollView {
+                                    LazyVStack(alignment: .leading, spacing: 10) {
+                                        if chatMessages.isEmpty {
+                                            Text("Tell me about the chair you want. You can refine it: ‘make it white’, ‘under AED 300’, or ‘without armrests’.")
+                                                .font(.caption).foregroundStyle(.secondary)
+                                        }
+                                        ForEach(chatMessages) { message in
+                                            VStack(alignment: .leading, spacing: 3) {
+                                                Text(message.role == "user" ? "You" : "RoomWise").font(.caption2.bold())
+                                                Text(message.content).font(.subheadline).textSelection(.enabled)
+                                            }
+                                            .padding(9).frame(maxWidth: .infinity, alignment: .leading)
+                                            .background(message.role == "user" ? sageSurface : Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
+                                            .id(message.id)
+                                        }
+                                    }
                                 }
-                                .buttonStyle(.bordered)
-                                .tint(openingsAmber)
-                                .controlSize(.regular)
-                            } else {
-                                Button("Search") {
-                                    performSearch()
+                                .accessibilityIdentifier("shopping-conversation-history")
+                                .frame(maxHeight: 230)
+                                .onChange(of: chatMessages.count) { _, _ in
+                                    if let id = chatMessages.last?.id { withAnimation { proxy.scrollTo(id, anchor: .bottom) } }
                                 }
-                                .buttonStyle(.borderedProminent)
-                                .tint(forestGreen)
-                                .controlSize(.regular)
-                                .disabled(queryText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                             }
+                        }
+                        HStack(spacing: 8) {
+                            TextField("Tell RoomWise what you want…", text: $queryText, axis: .vertical)
+                                .accessibilityIdentifier("shopping-chat-input")
+                                .focused($chatFocused)
+                                .lineLimit(1...3).textFieldStyle(.roundedBorder)
+                            Button("Send") { sendChat() }
+                                .buttonStyle(.borderedProminent).tint(forestGreen)
+                                .disabled(isSearching || queryText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        }
+                        HStack {
+                            Button("Find matches") { performSearch() }
+                                .buttonStyle(.borderedProminent).tint(forestGreen)
+                                .disabled(isSearching || (chatPreferences == nil && queryText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty))
+                            if isSearching { Button("Cancel") { cancelSearch() } }
+                            Spacer()
+                            Button("New chat") {
+                                cancelSearch(); chatMessages = []; chatPreferences = nil; queryText = ""
+                                ShoppingChatStore.clear()
+                                persistCurrentSession()
+                            }.font(.caption)
                         }
 
                         // Sample Mode Toggle
@@ -269,6 +286,7 @@ struct ContentView: View {
                                 get: { sampleMode },
                                 set: { newValue in
                                     cancelSearch()
+                                    pairing.disconnect()
                                     sampleMode = newValue
                                     products = products.filter { $0.provenance != .fixture } + (newValue ? DemoKt.demoProducts() : [])
                                     selectedProduct = products.first
@@ -324,7 +342,7 @@ struct ContentView: View {
                             .tint(forestGreen)
                         }
                         if !sampleMode {
-                            RetailerSearchLinksView(query: queryText)
+                            RetailerSearchLinksView(query: retailerQuery)
                         }
 
                         // Product Cards Shortlist
@@ -335,34 +353,18 @@ struct ContentView: View {
                                 description: Text("Search with free-tier keys, browse a retailer, or add a chair using your own measurements.")
                             )
                         }
-                        VStack(spacing: 12) {
-                            ForEach(products, id: \.id) { product in
-                                ProductCardView(
-                                    product: product,
-                                    isSelected: selectedProduct?.id == product.id,
-                                    isLowestPrice: isLowestPrice(product: product),
-                                    onPreview: {
-                                        selectedProduct = product
-                                        chairPose = GeometryKt.initialPlacement(room: activeRoom, d: product.previewSize())
-                                        persistCurrentSession()
-                                    },
-                                    onEditDimensions: {
-                                        editingProductForDims = product
-                                    },
-                                    onDetails: {
-                                        detailsProduct = product
-                                    }
-                                )
-                                .contextMenu {
-                                    Button("Remove from shortlist", role: .destructive) {
-                                        products.removeAll { $0.id == product.id }
-                                        if selectedProduct?.id == product.id {
-                                            selectedProduct = products.first
-                                            chairPose = GeometryKt.initialPlacement(room: activeRoom, d: selectedProduct?.previewSize())
-                                        }
-                                        persistCurrentSession()
-                                    }
-                                }
+                        ShoppingProductPager(
+                            products: products,
+                            selectedId: Binding(get: { selectedProduct?.id }, set: { id in
+                                if let product = products.first(where: { $0.id == id }) { selectShoppingProduct(product) }
+                            }),
+                            onEdit: { editingProductForDims = $0 },
+                            onDetails: { detailsProduct = $0 },
+                            onPageValidityChange: { previewPaused = !$0 }
+                        )
+                        if let selectedProduct {
+                            DisclosureGroup("Placement and fit") {
+                                PlacementControlsView(room: activeRoom, product: selectedProduct, pose: $chairPose, onPoseChange: { chairPose = $0; persistCurrentSession() })
                             }
                         }
 
@@ -386,7 +388,37 @@ struct ContentView: View {
                 }
                 .padding(.bottom, 24)
             }
+            .accessibilityIdentifier("shopping-workspace")
+            .scrollDismissesKeyboard(.interactively)
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { chatFocused = false }
+                }
+            }
+            .safeAreaInset(edge: .top, spacing: 0) {
+                VStack(spacing: 0) {
+                LiveRoomPreviewView(room: activeRoom, product: selectedProduct, pose: $chairPose,
+                                    previewPaused: previewPaused,
+                                    pairedStatus: pairing.isConnected || pairing.isPairing || pairing.status.contains("Disconnected") || pairing.status.contains("interrupted") ? pairing.status : nil,
+                                    onPoseChange: { chairPose = $0; persistCurrentSession() })
+                Divider()
+                }
+            }
+            .onReceive(pairing.$revision) { revision in
+                guard revision >= 0 else { return }
+                products = pairing.products
+                retailerStatuses = Dictionary(uniqueKeysWithValues: ["Amazon UAE", "Noon UAE", "Temu"].map { ($0, "Paired desktop listings") })
+                if let product = products.first(where: { $0.id == pairing.selectedProductId }) {
+                    if selectedProduct?.id != product.id { chairPose = GeometryKt.initialPlacement(room: activeRoom, d: product.previewSize()) }
+                    selectedProduct = product
+                } else { selectedProduct = nil }
+                previewPaused = false
+                statusBanner = "Desktop selection received. Swipe here or on desktop to compare."
+                persistCurrentSession()
+            }
             .navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $showPairing) { PhonePairingSheet(session: pairing, onConnect: { cancelSearch() }) }
             .sheet(isPresented: $showScanSheet) {
                 ScanSheetView(
                     controller: capture,
@@ -471,18 +503,20 @@ struct ContentView: View {
                     statusBanner = "Import error: \(err.localizedDescription)"
                 }
             }
-            .alert("Allow live search?", isPresented: $showSearchConsent) {
+            .alert("Allow chat and search sharing?", isPresented: $showSearchConsent) {
                 Button("Cancel", role: .cancel) {}
-                Button("Allow & Search") {
+                Button("Allow") {
                     liveSearchConsent = true
-                    performSearch()
+                    if consentForChat { sendChat() } else { performSearch() }
                 }
             } message: {
-                Text("Groq receives your chair request if a Groq key is configured. Tavily receives chair search requirements. Each key is sent only to its own provider for authentication. Use the providers’ free plans; limits apply. Room geometry and camera images are never sent to these providers. Revoke permission in Help & Privacy.")
+                Text("Groq receives up to 12 recent chat messages and your accepted chair preferences if a Groq key is configured. Tavily receives chair search requirements. Each key is sent only to its own provider for authentication. Use the providers’ free plans; limits apply. Room geometry and camera images are never sent to these providers. Revoke permission in Help & Privacy.")
             }
             .confirmationDialog("Delete saved rooms and searches?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
                 Button("Delete local data", role: .destructive) {
                     cancelSearch()
+                    pairing.disconnect()
+                    ShoppingChatStore.clear(); chatMessages = []; chatPreferences = nil
                     RoomPersistence.clearSavedData()
                     activeRoom = DemoKt.demoRoom()
                     products = DemoKt.demoProducts()
@@ -496,11 +530,12 @@ struct ContentView: View {
                     statusBanner = "Local data deleted. Provider keys can be cleared in Connections."
                 }
             } message: {
-                Text("Removes the saved room, products, placement, and search from this device. Files you exported and data already sent to providers are managed separately. Provider keys can be cleared in Connections.")
+                Text("Removes the saved conversation, preferences, room, products, placement, and search from this device. Files you exported and data already sent to providers are managed separately. Provider keys can be cleared in Connections.")
             }
             .onChange(of: scenePhase) { _, phase in
                 if phase == .background {
                     cancelSearch()
+                    pairing.disconnect()
                     persistCurrentSession()
                     if case .scanning = capture.phase { capture.cancelScan() }
                     if case .processing = capture.phase { capture.cancelScan() }
@@ -524,13 +559,17 @@ struct ContentView: View {
     // MARK: - Search Orchestration
 
     private func performSearch() {
+        chatFocused = false
         let query = String(queryText.trimmingCharacters(in: .whitespacesAndNewlines).prefix(2000))
-        guard !query.isEmpty else { return }
+        if !query.isEmpty { sendChat(findAfter: true); return }
+        guard let preferences = chatPreferences else { sendChat(findAfter: true); return }
         guard sampleMode || liveSearchConsent else {
+            consentForChat = false
             showSearchConsent = true
             return
         }
         cancelSearch()
+        pairing.disconnect()
         let requestId = UUID()
         activeRequestId = requestId
         queryText = query
@@ -538,12 +577,18 @@ struct ContentView: View {
         searchLogs = []
 
         if sampleMode {
-            let samples = DemoKt.demoProducts()
+            let samples = DemoKt.demoProducts().filter { product in
+                let budgetMatches = preferences.budget == nil || (product.currency == preferences.currency && (product.price?.doubleValue ?? .infinity) <= preferences.budget!.doubleValue)
+                let colourMatches = preferences.colour == nil || product.title.localizedCaseInsensitiveContains(preferences.colour!)
+                let widthMatches = preferences.maxWidth == nil || (product.previewSize()?.width ?? .infinity) <= preferences.maxWidth!.doubleValue
+                let depthMatches = preferences.maxDepth == nil || (product.previewSize()?.depth ?? .infinity) <= preferences.maxDepth!.doubleValue
+                return budgetMatches && colourMatches && widthMatches && depthMatches
+            }
             products = products.filter { $0.provenance != .fixture } + samples
-            selectedProduct = samples.first
+            selectedProduct = products.first
             chairPose = GeometryKt.initialPlacement(room: activeRoom, d: selectedProduct?.previewSize())
             retailerStatuses = Dictionary(uniqueKeysWithValues: ["Amazon UAE", "Noon UAE", "Temu"].map { ($0, "Sample fixture") })
-            statusBanner = "Offline sample chairs loaded"
+            statusBanner = "\(samples.count) sample listings match the known budget, colour, and size fields. Features require manual review."
             isSearching = false
             persistCurrentSession()
             return
@@ -555,23 +600,17 @@ struct ContentView: View {
             return
         }
         let tavilyKey = credentials.tavilyKey
-        let groqKey = credentials.groqKey
-        let model = credentials.groqModel
         products = products.filter { $0.provenance == .userEntered }
         selectedProduct = products.first
         retailerStatuses = Dictionary(uniqueKeysWithValues: ["Amazon UAE", "Noon UAE", "Temu"].map { ($0, "Waiting…") })
         statusBanner = "Preparing search…"
         searchTask = Task { @MainActor in
             do {
-                let parsed = try await FreeShoppingParser.parse(prompt: query, groqKey: groqKey, model: model)
                 guard activeRequestId == requestId else { return }
-                searchLogs.append(parsed.engineLabel)
-                searchLogs.append(parsed.note)
-                let preferences = parsed.preferences
                 searchLogs.append("Requirements: chair; colour \(preferences.colour ?? "any"); budget \(preferences.budget.map { "\(preferences.currency) \($0.doubleValue)" } ?? "not set"); features \(preferences.requiredFeatures.joined(separator: ", ")); maximum width \(preferences.maxWidth.map { "\($0.doubleValue) m" } ?? "not set"); maximum depth \(preferences.maxDepth.map { "\($0.doubleValue) m" } ?? "not set").")
-                statusBanner = "Searching retailers · \(parsed.engineLabel)"
+                statusBanner = "Searching retailers from your conversation preferences"
                 try await FreeCatalogSearch().run(
-                    preferences: parsed.preferences,
+                    preferences: preferences,
                     tavilyKey: tavilyKey,
                     onStoreUpdate: { store, found, status in
                         guard activeRequestId == requestId else { return }
@@ -605,6 +644,49 @@ struct ContentView: View {
             persistCurrentSession()
         }
     }
+    private func selectShoppingProduct(_ product: Product) {
+        if selectedProduct?.id != product.id { chairPose = GeometryKt.initialPlacement(room: activeRoom, d: product.previewSize()) }
+        selectedProduct = product
+        previewPaused = false
+        pairing.selectProduct(product.id)
+        persistCurrentSession()
+    }
+
+    private func sendChat(findAfter: Bool = false) {
+        let text = String(queryText.trimmingCharacters(in: .whitespacesAndNewlines).prefix(1500))
+        guard !text.isEmpty else { return }
+        chatFocused = false
+        guard sampleMode || liveSearchConsent else {
+            consentForChat = true; showSearchConsent = true; return
+        }
+        cancelSearch()
+        let requestId = UUID(); activeRequestId = requestId
+        chatMessages.append(ShoppingChatMessage(role: "user", content: text))
+        chatMessages = Array(chatMessages.suffix(40))
+        queryText = ""; isSearching = true
+        let history = chatMessages
+        let previous = chatPreferences
+        let key = sampleMode ? "" : credentials.groqKey
+        statusBanner = sampleMode ? "Offline conversation helper…" : "RoomWise is replying…"
+        searchTask = Task { @MainActor in
+            do {
+                let turn = try await ShoppingConversation.reply(messages: history, previous: previous, groqKey: key, model: credentials.groqModel)
+                guard activeRequestId == requestId else { return }
+                chatPreferences = turn.preferences
+                chatMessages.append(ShoppingChatMessage(role: "assistant", content: turn.reply))
+                chatMessages = Array(chatMessages.suffix(40))
+                ShoppingChatStore.save(messages: chatMessages, preferences: turn.preferences)
+                statusBanner = "\(turn.engineLabel) · Find matches when ready. Chat uses no catalog credits."
+                isSearching = false; searchTask = nil
+                if findAfter { performSearch() }
+            } catch {
+                guard activeRequestId == requestId else { return }
+                isSearching = false; searchTask = nil
+                statusBanner = "Reply cancelled or unavailable. Your previous preferences are preserved."
+            }
+        }
+    }
+
     private func cancelSearch() {
         searchTask?.cancel()
         searchTask = nil
@@ -647,11 +729,11 @@ struct HelpPrivacyView: View {
                     Text("Sample rooms and sample chairs are synthetic examples. Live prices, availability, and dimensions can change; confirm them on the retailer’s site.")
                 }
                 Section("Privacy policy · November 1, 2026") {
-                    Text("RoomWise saves your room geometry, search, products, and placement locally in app storage. The operating system may include this data in device backups. Camera images are used for RoomPlan and AR; RoomWise does not upload or save camera photos.")
+                    Text("RoomWise saves your conversation, room geometry, search, products, and placement locally in app storage. The operating system may include this data in device backups. Camera images are used for RoomPlan and AR; RoomWise does not upload or save camera photos.")
                     Text("Sample mode, room scanning, dimension editing, and fit checks work without provider accounts. Automatic retailer search is optional and uses your own Tavily free-tier key. A Groq free-tier key enables a hosted LLM to interpret your request on any supported phone. Free plans have quotas; RoomWise does not upgrade accounts or switch to paid providers.")
-                    Text("After your permission, Groq receives your chair request if configured. Tavily receives derived chair search requirements. Each key is sent only to its respective provider to authenticate requests. Neither provider receives room geometry, camera images, room counts, or placement data. Their policies apply to requests linked to your provider account.")
+                    Text("After your permission, Groq receives up to 12 recent chat messages and accepted chair preferences if configured. Tavily receives derived chair search requirements. Each key is sent only to its respective provider to authenticate requests. Neither provider receives room geometry, camera images, room counts, or placement data. Their policies apply to requests linked to your provider account.")
                     Text("Keys are stored in this device’s Keychain. They are sent only to their respective provider to authenticate requests. Keys are not included in room exports. RoomWise has no advertising, tracking, analytics SDK, or developer-operated account service.")
-                    Text("Exported room files contain private geometry. Sharing a file is your choice; copies outside the app must be deleted separately. Retailer links open external websites with their own policies.")
+                    Text("Exported room files contain private geometry. Sharing a file is your choice; copies outside the app must be deleted separately. Retailer pages load only when you choose, with their own policies. Optional desktop pairing shares product pages and selection over trusted local Wi-Fi using a temporary unencrypted link; no room, chat, or keys are shared. Pairing disconnects in the background.")
                     Link("Groq privacy policy", destination: URL(string: "https://groq.com/privacy-policy/")!)
                     Link("Tavily privacy policy", destination: URL(string: "https://www.tavily.com/privacy")!)
                 }

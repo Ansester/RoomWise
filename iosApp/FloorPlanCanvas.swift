@@ -344,8 +344,8 @@ private struct ARPreviewScreen: View {
     }
 }
 
-private struct ARFurniturePlacementView: UIViewRepresentable {
-    let dimensions: Dimensions
+struct ARFurniturePlacementView: UIViewRepresentable {
+    let dimensions: Dimensions?
 
     func makeCoordinator() -> Coordinator { Coordinator(dimensions: dimensions) }
 
@@ -378,34 +378,57 @@ private struct ARFurniturePlacementView: UIViewRepresentable {
         return view
     }
 
-    func updateUIView(_ uiView: ARSCNView, context: Context) {}
+    func updateUIView(_ uiView: ARSCNView, context: Context) {
+        context.coordinator.updateDimensions(dimensions, in: uiView.scene.rootNode)
+    }
 
     static func dismantleUIView(_ uiView: ARSCNView, coordinator: Coordinator) {
         uiView.session.pause()
     }
 
     final class Coordinator: NSObject {
-        let dimensions: Dimensions
-        private var placedNode: SCNNode?
+        private(set) var dimensions: Dimensions?
+        private(set) var placedNode: SCNNode?
+        private var placementTransform: SCNMatrix4?
 
-        init(dimensions: Dimensions) { self.dimensions = dimensions }
+        init(dimensions: Dimensions?) { self.dimensions = dimensions }
+
+        func updateDimensions(_ next: Dimensions?, in parent: SCNNode) {
+            let unchanged = dimensions?.width == next?.width && dimensions?.depth == next?.depth && dimensions?.height == next?.height
+            dimensions = next
+            guard !unchanged else { return }
+            if let node = placedNode { placementTransform = node.transform }
+            placedNode?.removeFromParentNode()
+            placedNode = nil
+            guard let next, next.valid(), let transform = placementTransform else { return }
+            let replacement = makeChairNode(next)
+            replacement.transform = transform
+            parent.addChildNode(replacement)
+            placedNode = replacement
+        }
+
+        func place(dimensions: Dimensions, transform: SCNMatrix4, in parent: SCNNode) {
+            self.dimensions = dimensions
+            placementTransform = transform
+            placedNode?.removeFromParentNode()
+            let node = makeChairNode(dimensions)
+            node.transform = transform
+            parent.addChildNode(node)
+            placedNode = node
+        }
 
         @objc func placeChair(_ gesture: UITapGestureRecognizer) {
-            guard let view = gesture.view as? ARSCNView,
+            guard let dimensions, dimensions.valid(),
+                  let view = gesture.view as? ARSCNView,
                   let query = view.raycastQuery(from: gesture.location(in: view), allowing: .estimatedPlane, alignment: .horizontal),
                   let result = view.session.raycast(query).first else { return }
 
-            placedNode?.removeFromParentNode()
-            let node = makeChairNode(dimensions)
-            let transform = result.worldTransform
-            node.simdPosition = SIMD3<Float>(transform.columns.3.x, transform.columns.3.y, transform.columns.3.z)
-            view.scene.rootNode.addChildNode(node)
-            placedNode = node
+            place(dimensions: dimensions, transform: SCNMatrix4(result.worldTransform), in: view.scene.rootNode)
         }
     }
 }
 
-private struct FurnitureScenePreview: UIViewRepresentable {
+struct FurnitureScenePreview: UIViewRepresentable {
     let dimensions: Dimensions
 
     func makeUIView(context: Context) -> SCNView {
@@ -417,6 +440,7 @@ private struct FurnitureScenePreview: UIViewRepresentable {
         view.allowsCameraControl = true
 
         let chair = makeChairNode(dimensions)
+        chair.name = "live-chair"
         scene.rootNode.addChildNode(chair)
 
         let floor = SCNFloor()
@@ -436,7 +460,13 @@ private struct FurnitureScenePreview: UIViewRepresentable {
         return view
     }
 
-    func updateUIView(_ uiView: SCNView, context: Context) {}
+    func updateUIView(_ uiView: SCNView, context: Context) {
+        guard let root = uiView.scene?.rootNode else { return }
+        root.childNode(withName: "live-chair", recursively: false)?.removeFromParentNode()
+        let chair = makeChairNode(dimensions)
+        chair.name = "live-chair"
+        root.addChildNode(chair)
+    }
 }
 
 func makeChairNode(_ dimensions: Dimensions) -> SCNNode {

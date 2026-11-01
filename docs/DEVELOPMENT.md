@@ -12,7 +12,7 @@ Start with [architecture](ARCHITECTURE.md) for the module boundaries, [user guid
 | Gradle | All Kotlin tasks | Checked-in wrapper, Gradle 9.3.0 |
 | Kotlin | Shared/JVM/native compilation | 2.3.21, declared in the root build |
 | Compose Multiplatform | Desktop UI | 1.11.1 |
-| Koog | Optional desktop Groq requirements agent | 1.2.0 |
+| Koog | Retained legacy desktop requirements adapter; new chat uses a bounded direct Groq adapter | 1.2.0 |
 | Python 3 | Desktop launcher and project/release validation | No third-party Python package required by these scripts |
 | Xcode and iOS Simulator runtime | iPhone compile/test | Local verification used Xcode 27.1; public CI passed under Xcode 26.6; deployment target is iOS 17 |
 | Apple-silicon native target | Checked-in iPhone framework paths | `iosArm64` and `iosSimulatorArm64` |
@@ -67,9 +67,17 @@ For development, `./gradlew :desktop:run` directly runs the Compose app. This by
 
 The desktop initially shows an import/sample choice. Choose **Explore sample room** to populate the room and chairs. A default launch does not perform live shopping automatically.
 
+## Connected-shopping implementation
+
+The phone and desktop conversation adapters return a natural-language reply and validated complete preferences. Their HTTP transports are injectable for tests. Keep bounded history, latest-refinement behavior, cancellation, and labelled fallback aligned across platforms. Catalog search and geometry are subsequent local stages, not remote model tools.
+
+The product carousel's active ID is the preview selection. A missing assembled size should clear the object. Product changes update a running AR/rehearsal scene rather than requiring a new preview presentation. Preserve the difference between dimension-based schematic geometry and a retailer's exact mesh.
+
+The desktop `LivePreviewSession` provides the optional LAN server. JDK's built-in HTTP implementation avoids a cloud service or additional runtime subscription. Pairing starts explicitly and transmits only products/selection. Use loopback tests for token rejection, revisions, known-ID mutations, bounds, and shutdown; test actual LAN permissions/firewalls separately. Do not log the private bearer URL. [Protocol](LIVE_SHOPPING.md).
+
 ## Own-key configuration
 
-The free workflow uses a personal Groq key for request interpretation and a personal Tavily key for retailer discovery. The supported model is `openai/gpt-oss-20b` hosted by Groq. No developer-shared key is needed. See [shopping](SHOPPING_PIPELINE.md) for provider boundaries, quotas, and differences between platforms.
+The free workflow uses a personal Groq key for contextual shopping conversation and a personal Tavily key for retailer discovery. The supported model is `openai/gpt-oss-20b` hosted by Groq. No developer-shared key is needed. See [shopping](SHOPPING_PIPELINE.md) for provider boundaries, quotas, and differences between platforms.
 
 | Configuration source | Applies to | Persistence |
 | --- | --- | --- |
@@ -93,18 +101,34 @@ Run checks appropriate to the changed behavior:
 ```sh
 sh scripts/check.sh
 sh scripts/check-ios.sh
+sh scripts/check-live-pairing.sh
 sh scripts/release-check.sh
 ```
 
 | Command | What it checks | What it does not establish |
 | --- | --- | --- |
 | `check.sh` | Shared JVM tests, desktop shopping tests, Compose UI smoke tests, desktop Kotlin compilation | Device behavior, authenticated provider success, or cross-platform distribution |
-| `check-ios.sh` | Unsigned Debug device compilation, available iPhone Simulator selection, XCTest and hosted SwiftUI render tests | Signed installation, full touch-driven navigation, camera/LiDAR accuracy, or App Store acceptance |
+| `check-ios.sh` | Unsigned Debug device compilation, available iPhone Simulator selection, XCTest, targeted XCUITest interaction cases, and hosted SwiftUI renders | Complete UI coverage, signed installation, physical AR/LiDAR accuracy, authenticated providers, or App Store acceptance |
+| `check-live-pairing.sh` | Actual desktop JVM host/shared Product serialization exchanged with the native Simulator client over local HTTP | Two physical devices, Wi-Fi/firewall/permission behavior on every network, physical AR, or provider access |
 | `release-check.sh` | Checked-in Xcode references/schemes, app resources/version/privacy expectations, current-source credential patterns | Complete historical secret removal or provider credential revocation |
 
-The XCTest provider tests inject `HTTPTransport` responses; do not supply real keys to run them. Hosted render tests attach compact/large screenshots to the `.xcresult`. Images verify renderability/layout within their covered views, not physical AR tracking or a full interactive UI test.
+The XCTest provider tests inject `HTTPTransport` responses; do not supply real keys to run them. Hosted render tests attach compact/large screenshots to the `.xcresult`. Images verify renderability/layout within their covered views. Separate XCUITest cases exercise actual chat refinement and product swiping/unknown-size behavior; those targeted interactions do not establish complete UI coverage or physical AR tracking.
 
 Gradle reports are written under each module's ignored `build/` directory. Xcode reports and `.xcresult` bundles appear under its DerivedData output. Consult `docs/VALIDATION.md` rather than assuming a previous test count or result still applies after code changes.
+
+## Real JVM-to-native pairing check
+
+```sh
+sh scripts/check-live-pairing.sh
+```
+
+This separate macOS check requires Xcode with an available iPhone Simulator, JDK 21, and Python 3. It builds the actual desktop application JAR, compiles the small [`LivePairingFixture.java`](../scripts/LivePairingFixture.java) harness against that JAR, and builds/runs one native Simulator XCTest in dedicated DerivedData. It removes provider-key environment values and requires no accounts, public service, or physical phone.
+
+The Java fixture starts the real `LivePreviewSession` and serializes shared `Product` fixtures. The native `LivePhoneSession` uses its default URLSession transport rather than an injected response: receive product A, POST selection B back to the JVM host, then observe the host publish product C with unknown dimensions. Assertions cover the cross-language wire contract, actual HTTP transport, bidirectional selection, and missing-size state across that sequence.
+
+The ordinary `check-ios.sh` suite deliberately **skips this one integration case** when its temporary endpoint is absent. A green normal suite is therefore not a substitute for running `check-live-pairing.sh`. The wrapper creates/injects a private loopback URL only for its test process, sanitizes logs under `build/live-pairing-*.log`, and cleans up the temporary listener/configuration. Do not manually publish its endpoint. Successful results are recorded separately in [validation](VALIDATION.md); the presence of this script alone is not a passing result.
+
+A successful run verifies actual transport beyond mocked-client responses, but it still uses one Mac and Simulator loopback. Test same-Wi-Fi physical devices, permissions, and camera AR separately if those are needed for a demonstration or distribution.
 
 ## Optional local archive
 
@@ -133,6 +157,7 @@ Without `--unsigned`, normal Xcode signing requirements apply. Future store mate
 | Room import rejected | Check the [schema](ROOM_FORMAT.md), UTF-8 JSON, units, coordinate marker, transform agreement, and geometry bounds |
 | Unknown price/dimensions | Inspect explicit source evidence; add assembled dimensions manually rather than weakening ambiguity rules |
 | Groq model/key/quota error | Verify your own free account; local interpretation is the intended fallback |
+| Pairing cannot connect | Check same trusted network, current session URL, iOS local-network permission, and desktop firewall/client isolation; see [pairing troubleshooting](LIVE_SHOPPING.md#troubleshooting) |
 | Tavily key/quota error | Use browser/manual entry; do not add retries or paid escalation merely to hide the limit |
 | Tests pass but hardware behavior differs | Hosted rendering and mocks have narrower coverage; record and reproduce the hardware issue separately |
 
@@ -142,6 +167,7 @@ Without `--unsigned`, normal Xcode signing requirements apply. Future store mate
 - **New product category:** update requirements validation, category filters, evidence rules, UI copy, preview geometry, and tests. The current category and illustrative mesh are chair-specific.
 - **New model/provider:** add a validated, tested interpretation adapter with an explicit data boundary. Preserve local product facts and fit calculations. A different provider needs updated consent and privacy documentation.
 - **Geometry improvements:** add adversarial tests for a concrete failure first. Clearance buffers, spatial indexing, mesh-aware collision, and layout optimization are possible future work, not present features.
+- **Pairing changes:** version the snapshot contract, validate selection IDs and payload sizes, preserve stop/token rotation, and update local-network disclosure. TLS/internet relays would create a different trust/deployment boundary; current pairing is trusted-LAN HTTP.
 - **Persistence/schema changes:** preserve old version handling or explicitly version the room contract; keep `USER_ENTERED`, fixture, and retrieved provenance distinct.
 
 See [contributing](../CONTRIBUTING.md) for pull-request expectations and evidence handling.

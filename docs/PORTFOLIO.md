@@ -1,12 +1,12 @@
 # Portfolio and CV material
 
-This is prepared copy for featuring RoomWise. It does not update or publish a CV or website. The canonical public repository is: **https://github.com/Ansester/RoomWise**.
+Prepared copy for featuring RoomWise at **https://github.com/Ansester/RoomWise**. This file does not update or publish a CV or website.
 
-Describe the work as a **collaborative software prototype** and retain [contributor credit](CONTRIBUTORS.md). The project-level descriptions below are supported by the source; select any first-person implementation claims only after confirming they match your own contribution.
+Describe RoomWise as a **collaborative conversational-shopping prototype with a live room preview**. Retain [contributor credit](CONTRIBUTORS.md). Project-level claims below describe the shared implementation; select first-person responsibilities only after confirming they match your contribution.
 
 ## Recommended project header
 
-**RoomWise — furniture fit checking**
+**RoomWise — conversational shopping with a live room preview**
 
 Collaborative software project · 2026
 
@@ -16,28 +16,28 @@ Kotlin Multiplatform · SwiftUI · RoomPlan · ARKit · Compose Desktop · Groq 
 
 ### Compact version
 
-- Co-developed RoomWise, a furniture-planning prototype with native iPhone and desktop interfaces, shared Kotlin geometry, room-file transfer, and dimension-based chair placement.
-- Separated LLM request interpretation from sourced product facts and deterministic fit checks; the repository includes 67 passing automated tests and an unsigned iPhone Release build.
+- Co-developed RoomWise, a conversational furniture-shopping prototype that connects contextual LLM chat and swipeable product browsing to a changing iPhone room preview.
+- Connected native iPhone and desktop interfaces through shared Kotlin geometry and an account-free local pairing protocol; separated sourced product dimensions and footprint checks from model-generated conversation.
 
-The second bullet describes project evidence, not a claim that one contributor personally wrote every test or component. If a CV needs one bullet, use:
+If only one bullet fits:
 
-> Co-developed RoomWise, a Kotlin Multiplatform furniture fit-checking prototype combining native RoomPlan/ARKit interaction, rotated-footprint geometry, and evidence-labelled retailer search across iPhone and desktop.
+> Co-developed RoomWise, a Kotlin Multiplatform shopping prototype combining ongoing LLM chat, swipeable chair listings, and a live dimension-based iPhone room preview, with optional desktop-to-phone pairing over local Wi-Fi.
 
 ### Systems-focused alternative
 
-> Co-developed a native iPhone and desktop room-planning prototype with shared Kotlin serialization and geometry; handled rotated footprints, concave boundaries, incomplete scans, and provenance for sample, retrieved, and user-entered furniture data.
+> Co-developed native iPhone and desktop shopping interfaces with shared Kotlin models/geometry, revisioned local product-selection synchronization, contextual chat, and explicit handling of missing retailer evidence.
 
 ### AI-application alternative
 
-> Co-developed a furniture-shopping prototype that uses hosted Groq for structured chair requirements and Tavily for indexed retailer listings, while validating product evidence and calculating geometric fit outside the LLM.
+> Co-developed a conversational furniture-shopping prototype using Groq for contextual requirements and Tavily for retailer discovery; linked product-page selection to a phone room preview while keeping product facts and geometric fit outside LLM output.
 
-Use the alternatives to emphasize the relevant engineering work. They are not additional claims of user impact, field accuracy, or production deployment. There are no supported percentage improvements or user/adoption metrics to add.
+These are descriptions of implemented systems, not user-impact results. Use the [validation record](VALIDATION.md) if adding exact test/build evidence; do not carry a prior test total forward after changing the implementation. No supported adoption, accuracy-improvement, or reduced-return percentages are available.
 
 ## Website project card
 
 **Title:** RoomWise
 
-**Subtitle:** Room-aware chair planning across iPhone and desktop
+**Subtitle:** Talk, browse, and preview furniture in your room
 
 **Status:** Collaborative software prototype
 
@@ -45,41 +45,41 @@ Use the alternatives to emphasize the relevant engineering work. They are not ad
 
 **Short description:**
 
-RoomWise combines native room capture, dimension-based chair previews, and shared Kotlin geometry to check furniture footprints against a captured space. Optional Groq and Tavily integrations interpret shopping requests and find retailer listings, while missing dimensions and uncertain facts remain explicit.
+RoomWise connects an ongoing shopping conversation to swipeable chair listings and a live iPhone room preview. Browse on the phone or pair a desktop over local Wi-Fi; the selected product changes the dimension-based schematic in the room. Groq and Tavily provide optional free-tier chat and discovery, while shared Kotlin code validates product evidence and checks captured floor footprints.
 
-**Suggested tags:** Kotlin Multiplatform, SwiftUI, ARKit, computational geometry, AI applications.
+**Suggested tags:** Kotlin Multiplatform, SwiftUI, ARKit, conversational AI, local networking, computational geometry.
 
-**Image:** [iPhone sample preview](screenshots/iphone-sample-preview.png)
+**Image:** [Connected shopping page and room preview](screenshots/shopping-page-live-preview.png). Optional [ongoing conversation capture](screenshots/ongoing-conversation.png).
 
-**Alt text:** RoomWise sample room with a scaled chair, rotation and movement controls, and furniture search.
+**Alt text for the existing image:** RoomWise sample room with a scaled chair, rotation and movement controls, and furniture search.
 
-**Caption:** Hosted iPhone render with synthetic sample room and chair data.
+**Caption:** Actual Simulator interaction capture using synthetic sample products. The conversation capture shows the explicitly labelled offline helper; it is not a live-provider demonstration.
 
 ## Website case-study introduction
 
-RoomWise is a collaborative furniture-planning prototype for checking whether a chair's footprint fits a captured room. It connects a native SwiftUI iPhone interface and a Compose Desktop companion through Kotlin Multiplatform models and geometry.
+RoomWise explores a shopping experience where a person can keep talking about what they want, browse product options, and see the selected chair change in their room. A native SwiftUI iPhone app connects contextual conversation, product-page browsing, and a dimension-based room preview. A Compose Desktop companion can drive the phone's product selection through a temporary local-network session.
 
-The engineering focus is the boundary between uncertain shopping information and deterministic spatial checks. A hosted LLM interprets chair requirements, retailer search supplies listing evidence, and shared code performs the footprint calculations. Missing assembled dimensions, conflicting prices, and incomplete room boundaries remain visible instead of being filled in by the model.
+The engineering challenge is keeping that connected experience honest about evidence. Groq generates conversational replies and structured preferences; Tavily discovers indexed retailer listings; explicit source text supplies dimensions; and shared Kotlin geometry calculates floor-footprint checks. A missing measurement remains unknown rather than becoming a model estimate. The visual object is a generic scaled chair, not a seller-specific 3D asset.
 
-The repository includes a keyless sample workflow, optional free-tier provider setup, local data controls, and reproducible build/test instructions. Local verification covers 67 automated tests, an unsigned iPhone Release archive, and hosted interface renders. Live-provider reliability and user outcomes have not been evaluated in that record.
+Sample mode and local pairing need no RoomWise account or cloud deployment. Hosted chat and search use each user's optional free-tier keys. Automated checks and recorded builds are engineering evidence; live-provider reliability, physical-device behavior, and user outcomes need their own validation.
 
 **Credit line:** A collaborative project by [Ashmit Mukherjee](https://github.com/Ansester) and [Aadil Chasmawala](https://github.com/Aarz1401).
 
-Link the card to the [full case study](CASE_STUDY.md) or adapt that page for the website. Keep the claim boundaries even when shortening the copy.
+Link to the [case study](CASE_STUDY.md), [live-shopping walkthrough](LIVE_SHOPPING.md), and [validation record](VALIDATION.md) for detail.
 
-## Add a personal contribution paragraph
+## Personal contribution paragraph
 
-Before using first-person language, record two or three concrete responsibilities that you can explain in an interview. Useful categories are frontend/workflow work, shared geometry and contracts, provider integration, tests and release tooling, and project coordination. Name the parts you actually owned; do not select the whole list by default.
+Choose two or three responsibilities you can explain in an interview, such as conversation state, native browsing/preview integration, local pairing, shared geometry, provider adapters, or verification/release tooling. State which parts you actually owned and one design decision you can defend. Confirm the division of work with your collaborator when needed.
 
-For each responsibility, add a source link or a specific design decision you can discuss. Confirm the division of work with your collaborator if it is unclear. The public repository's clean snapshot preserves contributor credit but does not reproduce the entire development history.
+The public repository begins from a clean source snapshot with contributor credit; it does not reproduce the whole private development history or establish sole authorship.
 
 ## Interview walkthrough
 
-1. Show the keyless sample and explain why a clone does not need the author's device or keys.
-2. Rotate and move a chair. Explain the difference between a footprint check and a real-world clearance guarantee.
-3. Show the incomplete-boundary behavior and the test for a concave notch.
-4. Trace request interpretation → retailer search → evidence parsing → geometric check. Explain which outputs the LLM is permitted to influence.
-5. Explain sample/live/user-entered provenance, cancellation isolation, and missing-data handling.
-6. Use the [validation record](VALIDATION.md) to distinguish tests, renders, live calls, and hardware evidence.
+1. State the intended loop: conversation → product page → changing room preview.
+2. Refine an existing request and explain bounded history, structured preferences, and local fallback.
+3. Swipe between product pages; explain why selected-product state drives both the page and the visual object.
+4. Start a local pairing session, explain revisions and token authorization, and distinguish local HTTP from encrypted internet transport.
+5. Show missing-dimension behavior, provenance, and a rotated-footprint conflict. Explain the boundary between a schematic, evidence, and actual physical fit.
+6. Use [validation](VALIDATION.md) to distinguish mocked tests, loopback protocol checks, hosted renders, live providers, and hardware acceptance.
 
-The [claims guide](CLAIMS.md) is the final wording check for any public description.
+Use the [claim ledger](CLAIMS.md) as the final wording check.

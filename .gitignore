@@ -11,3 +11,7 @@ iosApp/Generated/
 .tools/
 config.local.properties
 build/
+
+# Python launcher/runtime caches
+__pycache__/
+*.py[cod]

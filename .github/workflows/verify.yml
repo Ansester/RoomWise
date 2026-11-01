@@ -45,3 +45,5 @@ jobs:
         run: sh scripts/check.sh
       - name: Verify unsigned iPhone build and simulator tests
         run: sh scripts/check-ios.sh
+      - name: Verify real desktop to native phone pairing
+        run: sh scripts/check-live-pairing.sh

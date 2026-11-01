@@ -1,11 +1,12 @@
 # RoomWise documentation
 
-RoomWise is a collaborative software prototype for checking a chair's floor footprint against captured room geometry. The public source includes iPhone and desktop frontends, shared Kotlin contracts, an account-free sample workflow, and optional free-tier provider setup.
+RoomWise is a collaborative conversational-shopping prototype: refine a chair request, browse product pages, and see the selected item change in an iPhone room preview. The public source includes iPhone and desktop frontends, shared Kotlin contracts, an account-free sample workflow, and optional free-tier provider setup.
 
 ## Choose a starting point
 
 | You want to… | Read |
 | --- | --- |
+| Use ongoing chat, product pages, and phone pairing | [Live-shopping guide](LIVE_SHOPPING.md) |
 | Run and use the app | [User guide](USER_GUIDE.md) |
 | Build a clone or troubleshoot a toolchain | [Development guide](DEVELOPMENT.md) |
 | Present a short demonstration | [Demo walkthrough](DEMO.md) |
@@ -25,4 +26,4 @@ RoomWise is a collaborative software prototype for checking a chair's floor foot
 
 Implementation descriptions refer to the current source. Test counts refer to the recorded engineering suite, with provider behavior checked using local HTTP mocks. Hosted screenshots show synthetic samples and empty settings; they are not evidence of live catalog results or physical scanning accuracy. The claim ledger links specific technical statements to source/tests and separates unsupported impact or deployment claims.
 
-No Apple Intelligence-capable phone, private author account, or paid subscription is needed to build and demonstrate the sample. Camera/LiDAR requirements apply to the optional physical capture/AR workflows. Live search uses each user's own Groq and Tavily free-tier keys, within provider quotas.
+No Apple Intelligence-capable phone, private author account, or paid subscription is needed to build and demonstrate the sample. Camera/LiDAR requirements apply to the optional physical capture/AR workflows. Live chat/search uses each user's own Groq and Tavily free-tier keys, within provider quotas. Optional desktop-to-phone selection pairing uses a temporary local HTTP session with no cloud account.
