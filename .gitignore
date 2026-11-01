@@ -1,0 +1,13 @@
+.gradle/
+.kotlin/
+**/build/
+.DS_Store
+*.xcuserstate
+xcuserdata/
+.env*
+!.env.example
+iosApp/Generated/
+*.log
+.tools/
+config.local.properties
+build/

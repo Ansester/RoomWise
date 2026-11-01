@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="RoomWise support. Get help with iPhone room scanning, chair dimension previews, fit checks, and optional live search.">
+  <title>RoomWise — Support</title>
+  <link rel="icon" href="icon.png" type="image/png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="wrap">
+    <header class="site-header">
+      <a class="brand" href="index.html"><img src="icon.png" width="44" height="44" alt="">RoomWise</a>
+      <nav class="site-nav" aria-label="Main"><a href="privacy.html">Privacy</a><a href="mailto:info.roomwise@gmail.com">Contact</a></nav>
+    </header>
+    <main id="main">
+      <section class="hero" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">Room planning · Support</p>
+          <h1 id="page-title">A little help.<br>A clearer space.</h1>
+          <p class="intro">Room scanning, chair dimension previews, and footprint checks. Find the answers below, or get in touch.</p>
+        </div>
+        <aside class="contact-card" aria-label="Contact support">
+          <h2>Let's sort it out.</h2>
+          <p>Tell us what happened, your platform and OS version, and the RoomWise version or source revision you are using.</p>
+          <a class="button" href="mailto:info.roomwise@gmail.com">Email RoomWise <span aria-hidden="true">↗</span></a>
+          <small>info.roomwise@gmail.com<br>Please keep API keys out of support messages.</small>
+        </aside>
+      </section>
+      <section class="facts" aria-label="At a glance">
+        <div><strong>iOS 17 and later</strong><span>Room scanning needs a LiDAR iPhone.</span></div>
+        <div><strong>Free-tier connections</strong><span>Personal Groq and Tavily keys, or offline samples.</span></div>
+        <div><strong>Room geometry stays local</strong><span>Providers receive chair requirements only.</span></div>
+      </section>
+      <section class="faq" aria-labelledby="faq-title">
+        <div><h2 id="faq-title">Good to know.</h2><p class="aside-copy">A few practical answers for getting started and keeping control of your data.</p></div>
+        <div>
+          <details open><summary>Which iPhone do I need?</summary><p>RoomWise requires iOS 17 or later. RoomPlan scanning needs a LiDAR-equipped iPhone. On other supported iPhones, use the labelled sample room or import a RoomWise JSON file. Real AR needs supported hardware and camera access; the simulator provides a labelled 3D rehearsal.</p></details>
+          <details><summary>Do I need paid services or a particular device for AI?</summary><p>No paid model or device-specific AI is required. Automatic interpretation uses your own Groq free-plan key with the hosted openai/gpt-oss-20b model; retailer discovery uses your own Tavily Researcher free-tier key. Each clone uses its own credentials. Hosted interpretation is independent of your device. Sample planning, scanning, dimension editing, and fit checks need no provider keys.</p><p>If Groq is unavailable, a deterministic parser interprets requirements for Tavily search. Without Tavily access, retailer website links and manual chair entry remain available. The physical camera/LiDAR requirements apply only to scanning and AR.</p></details>
+          <details><summary>What are the free search limits?</summary><p>RoomWise uses Tavily basic search, up to three requests per search, with a local monthly allowance of 300 requests per installation. It uses no extract, advanced search, automatic retries, or paid-provider fallback. Provider quotas also apply and can be shared with your other projects. Choose the free plans; the app cannot control billing choices made in provider accounts.</p><p>Tavily currently advertises 1,000 free monthly credits with no card. Groq has model-specific free-plan limits. Check the providers' current <a href="https://www.tavily.com/pricing">Tavily plans</a> and <a href="https://console.groq.com/docs/rate-limits">Groq limits</a>. Quota exhaustion leaves browser/manual fallback available.</p></details>
+          <details><summary>How do I preview a chair I found elsewhere?</summary><p>Select a chair and use Edit to enter its assembled width, depth, and height from the seller's listing. Use the assembled dimensions, rather than the package size. RoomWise labels your measurements as user-entered. The preview is a simplified dimensional chair, not the seller's exact design.</p></details>
+          <details><summary>Why does a scan say “partial”?</summary><p>The captured walls do not form a sufficiently complete room boundary. You can still inspect a partial room, but RoomWise withholds boundary confirmation. Scan all walls, openings, and furniture where possible, and review the result before accepting it.</p></details>
+          <details><summary>What does a fit check cover?</summary><p>Checks compare the chair's floor footprint with captured walls and recognized furniture. They do not assess hidden obstacles, overhead clearance, movement, door swings, or delivery routes. Always measure and confirm the seller's dimensions before buying.</p></details>
+          <details><summary>What is shared during automatic search?</summary><p>After permission, Groq receives your chair request to interpret preferences, and Tavily receives chair-search requirements to discover listings. Each service receives its own authentication key. Neither receives room geometry, room counts, fit summaries, or camera images. Requests are associated with your provider accounts. Read the <a href="privacy.html">privacy policy</a> for details.</p></details>
+          <details><summary>How do I delete my data or keys?</summary><p>In Room actions &gt; Help &amp; Privacy, choose Delete saved rooms &amp; searches. This clears saved planning/search data. Clear provider keys separately in Connections. Exported files, device backups, and requests already received by providers are managed separately. Local quota accounting remains separate from saved planning data.</p><p>You can revoke automatic-search permission in Help &amp; Privacy; a future automatic search will ask again.</p></details>
+          <details><summary>Why are there missing dimensions or no live results?</summary><p>Listings may be unavailable or lack usable assembled dimensions. Provider authentication, quota, network access, or search coverage may also fail. Discovery is not a complete Amazon, Noon, or Temu catalogue. RoomWise keeps missing evidence visible instead of filling it in. Check the status, browse retailer websites, or enter dimensions yourself.</p></details>
+        </div>
+      </section>
+      <aside class="note"><h2>Sample and live results are different.</h2><p>Sample rooms and chairs are synthetic examples. Live prices, availability, and listing information can change. A dimensional preview helps you plan; confirm the current retailer listing and measure your space before ordering.</p></aside>
+    </main>
+    <footer class="site-footer"><span>RoomWise · Room planning</span><div class="footer-links"><a href="privacy.html">Privacy policy</a><a href="mailto:info.roomwise@gmail.com">Email support</a></div></footer>
+  </div>
+</body>
+</html>

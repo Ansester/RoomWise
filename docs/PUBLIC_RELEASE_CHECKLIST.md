@@ -1,0 +1,43 @@
+# Public source release
+
+RoomWise can be presented as a software prototype with source and reproducible engineering checks. Public source availability, an open-source licence, live-provider verification, and App Store distribution are separate states.
+
+## Current release route
+
+The original repository contains historical demo credentials. Deleting `config.local.properties` from the latest source does not remove that file from earlier commits. This audit did not read or test the old credential values, and their revocation status is unknown.
+
+For a public portfolio copy, export the reviewed current commit into a new directory and initialise a new repository there. Do not copy the original `.git` directory, ignored local configuration, generated Swift secrets, build outputs, or local app data. Preserve the project contributors' credit in the public copy. The original private repository can remain intact; this avoids an uncoordinated history rewrite and does not expose its historical credential blobs through the new repository.
+
+This route does not revoke credentials or erase copies of the old history. Their owner should still revoke/rotate the historical keys. GitHub recommends revocation/rotation as the first response to committed credentials and documents the limitations and collaborator impact of history rewriting. [GitHub sensitive-data guidance](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository).
+
+Changing the original repository's visibility requires repository administration permission. A push-capable collaborator may prepare commits but cannot assume control over the owner's visibility setting. [GitHub repository roles and visibility](https://docs.github.com/en/repositories/creating-and-managing-repositories/about-repositories).
+
+## Reusable source checks
+
+Run these against the finished documentation/source state:
+
+```sh
+python3 scripts/check-public-source.py
+sh scripts/release-check.sh
+
+# Run the same bounded inspection on an isolated export or source ZIP.
+python3 scripts/check-public-source.py --directory /absolute/path/to/clean-source
+python3 scripts/check-public-source.py --archive /absolute/path/to/RoomWise-source.zip
+```
+
+The public-source checker inspects current tracked and nonignored files by default. In export modes it inspects all supplied files, rejects included history/local configuration/build artifacts, and reports configured credential signatures, personal absolute paths, and location/path markers in PNG metadata. It prints file paths and categories, never matched values. It does not contact providers or inspect Git history. It is a bounded aid, not proof that every possible secret or sensitive fact has been found.
+
+## Inspection performed on November 1, 2026
+
+- Current tracked text/binary files contained no matches for the configured provider-token, GitHub-token, private-key, AWS-access-ID, or personal absolute-path signatures.
+- The two committed UI images show synthetic sample data or empty provider settings. Their PNG EXIF/XMP metadata contained generic screenshot descriptors, with no observed GPS, personal path, email, or author fields. The generated icons contained no textual metadata chunks.
+- The Xcode project retains a development-team identifier and original device bundle identifier. These identifiers are not provider credentials. Simulator/unsigned verification does not depend on that team's signing profile; installing on a physical device uses the installer's own signing setup.
+- The user-approved support address, `info.roomwise@gmail.com`, is intentionally public contact information.
+- Git author names identify multiple contributors. Public documentation should preserve that credit and avoid claiming sole authorship without a separately established contribution account.
+- No project `LICENSE` file was present at audit time. Do not describe the project as permissively licensed or choose a licence for other contributors without authority. GitHub distinguishes public visibility from an open-source licence. [GitHub licensing guidance](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/licensing-a-repository).
+
+## Portfolio evidence boundaries
+
+Use the current [validation record](VALIDATION.md) and [claim ledger](CLAIMS.md) for test counts, source anchors, and limitations. Automated provider checks use HTTP mocks; they are not live model, retailer-coverage, or pricing validation. Hosted UI renders are not physical LiDAR/AR acceptance tests. The existing archive is an unsigned build artifact, not a published app or signed installable IPA.
+
+After a public copy is created, verify its returned repository URL, public visibility, default branch/source commit, documentation links, and absence of an inherited private Git history. Record actual public CI outcomes separately from the local test evidence.

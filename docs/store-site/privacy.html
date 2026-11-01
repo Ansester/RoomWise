@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="How RoomWise handles local room data, optional live search, provider API keys, sharing, and deletion.">
+  <title>RoomWise — Privacy Policy</title>
+  <link rel="icon" href="icon.png" type="image/png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="wrap">
+    <header class="site-header">
+      <a class="brand" href="index.html"><img src="icon.png" width="44" height="44" alt="">RoomWise</a>
+      <nav class="site-nav" aria-label="Main"><a href="index.html">Support</a><a href="mailto:info.roomwise@gmail.com">Contact</a></nav>
+    </header>
+    <main class="policy" id="main">
+<h1>RoomWise Privacy Policy</h1>
+<p class="updated">Last updated: November 1, 2026</p>
+<p>RoomWise helps you scan a room, compare chair dimensions, and preview placement on your iPhone. No RoomWise account is required. Each user can optionally connect personal Groq and Tavily accounts for free-tier request interpretation and automatic retailer discovery.</p>
+<h2>Room data and camera access</h2>
+<p>The camera supports Apple RoomPlan scanning and augmented-reality placement. Scanning requires a supported LiDAR-equipped iPhone. RoomWise does not upload or save camera photos.</p>
+<p>Accepted scans are stored locally, together with search text, saved/pasted/entered product information, the selected chair, placement, and local search-quota accounting. A room file includes dimensions, coordinates, walls, openings, and recognized furniture. The operating system may include local data in device backups according to device settings. RoomWise does not operate a cloud room-storage service.</p>
+<p>Sample rooms and chairs are synthetic examples. Sample planning, scanning, dimension editing, and fit checks need no provider account.</p>
+<h2>Optional request interpretation and discovery</h2>
+<p>After permission and configuration of the relevant personal keys:</p>
+<ul><li>Groq receives your chair request to interpret requirements using a hosted model. The default model is <code>openai/gpt-oss-20b</code>, served by Groq; the app does not use the OpenAI API. A local deterministic parser is available when Groq is not configured or cannot complete the request.</li><li>Tavily receives chair-search requirements for retailer discovery through basic search.</li></ul>
+<p>Each key is sent only to its respective provider for authentication. Requests are associated with your provider accounts. Neither service receives room coordinate geometry, room counts/fit summaries, or camera images from this pipeline. Pasted listing text and manually entered chair details are processed locally.</p>
+<p>Provider policies and account settings govern handling and retention of requests. RoomWise does not promise requests are anonymous or immediately deleted. See <a href="https://groq.com/privacy-policy">Groq&#x27;s privacy policy</a>, <a href="https://console.groq.com/docs/your-data">GroqCloud data handling</a>, and <a href="https://www.tavily.com/privacy">Tavily&#x27;s privacy policy</a>.</p>
+<h2>Free-tier limits and keys</h2>
+<p>The automatic workflow is designed for a Groq free-plan account and Tavily Researcher free account. It uses no paid-provider fallback. Tavily requests use basic search with a local monthly cap; no extract, advanced search, or automatic retries are used. Provider account quotas and terms apply. RoomWise cannot control a plan or billing option changed outside the app. If Groq is unavailable, a deterministic parser interprets requirements for Tavily search. Without a Tavily key or available quota, external retailer links and manual chair entry remain available.</p>
+<p>Saved keys are stored in this device&#x27;s Keychain using device-only, when-unlocked accessibility. They are not sent to a developer-operated server, included in room exports, or intentionally written to app logs. Clear them separately through <strong>Connections</strong>.</p>
+<h2>External websites and file sharing</h2>
+<p>Retailer search/product links open only when you choose to open them. A search URL can contain your requirements. The external browser and website then handle the request under their own policies, cookies, account settings, and network practices. RoomWise does not process purchases or receive retailer login credentials.</p>
+<p>Exporting a room creates a JSON file for a sharing destination you choose. It contains private room geometry. Copies stored outside RoomWise or sent to another person are managed by that destination.</p>
+<p>RoomWise has no developer-operated account service, advertising, cross-app tracking, or analytics SDK.</p>
+<h2>Choices and deletion</h2>
+<p>Use local planning without automatic searches if you prefer not to send requirements to providers. Revoke automatic-search permission in <strong>Help &amp; Privacy</strong>; a later automatic search will ask again. This stops the current app search but cannot undo a request a provider already received.</p>
+<p>Choose <strong>Help &amp; Privacy &gt; Delete saved rooms &amp; searches</strong> to remove saved room/search/product/placement data and the temporary room-export file. Sample content is then shown again. Clear separately stored provider keys through <strong>Connections</strong>. The local request cap is maintained separately so deleting planning data does not provide extra automatic-search quota.</p>
+<p>Exported copies, backups, browser history, and requests already received by providers are managed separately. Use the operating system, browser, sharing destination, retailer, or provider account controls for those records and credential revocation.</p>
+<h2>Contact and updates</h2>
+<p>For support or privacy questions, contact <a href="mailto:info.roomwise@gmail.com">info.roomwise@gmail.com</a>.</p>
+<p>If data handling changes, this policy and its update date will be revised. Policy text is also available in the app&#x27;s <strong>Help &amp; Privacy</strong> screen.</p>
+    </main>
+    <footer class="site-footer"><span>RoomWise · Room planning</span><div class="footer-links"><a href="index.html">Support</a><a href="mailto:info.roomwise@gmail.com">Email support</a></div></footer>
+  </div>
+</body>
+</html>
