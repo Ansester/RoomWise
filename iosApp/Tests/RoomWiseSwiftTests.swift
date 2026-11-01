@@ -945,7 +945,7 @@ final class RoomWiseSwiftTests: XCTestCase {
         // thumbnail averages legitimate compact text into its white background.
         let sampleSize = 128
         var pixels = [UInt8](repeating: 0, count: sampleSize * sampleSize * 4)
-        let brightness = try pixels.withUnsafeMutableBytes { buffer in
+        let brightness: [Int] = try pixels.withUnsafeMutableBytes { (buffer: UnsafeMutableRawBufferPointer) -> [Int] in
             let context = try XCTUnwrap(CGContext(
                 data: buffer.baseAddress, width: sampleSize, height: sampleSize, bitsPerComponent: 8,
                 bytesPerRow: sampleSize * 4, space: CGColorSpaceCreateDeviceRGB(),
@@ -953,9 +953,19 @@ final class RoomWiseSwiftTests: XCTestCase {
             ))
             context.interpolationQuality = .high
             context.draw(cgImage, in: CGRect(x: 0, y: 0, width: sampleSize, height: sampleSize))
-            return stride(from: 0, to: buffer.count, by: 4).map {
-                (Int(buffer[$0]) + Int(buffer[$0 + 1]) + Int(buffer[$0 + 2])) / 3
+            // Explicit intermediate types keep the check inexpensive for the
+            // Swift 6.2 compiler shipped on the standard macOS CI runner.
+            var values: [Int] = []
+            values.reserveCapacity(sampleSize * sampleSize)
+            var offset = 0
+            while offset < buffer.count {
+                let red = Int(buffer[offset])
+                let green = Int(buffer[offset + 1])
+                let blue = Int(buffer[offset + 2])
+                values.append((red + green + blue) / 3)
+                offset += 4
             }
+            return values
         }
         XCTAssertGreaterThan((brightness.max() ?? 0) - (brightness.min() ?? 0), 30, "Rendered UI must have visible contrast")
         XCTAssertGreaterThan(brightness.filter { $0 < 220 }.count, 64, "Rendered UI must contain visible content, not an empty surface")
